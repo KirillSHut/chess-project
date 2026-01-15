@@ -1,8 +1,8 @@
 import { Container } from 'pixi.js';
 import { chessCells } from '../configs/chessCells.js';
 import { CellContainer } from '../controllers/components/Cell.js';
-import { BoardModel } from '../models/BoardModel.js';
 import { PawnFigure } from '../controllers/components/figures/PawnFigure.js';
+import { BaseFigure } from '../controllers/components/figures/BaseFigure.js';
 
 export class BoardView extends Container {
   constructor(stage) {
@@ -18,7 +18,7 @@ export class BoardView extends Container {
 
   init() {
     this._cells = [];
-    this._figures = [];
+    this.figures = [];
     this.cellsContainer = new Container();
     this.figureContainer = new Container();
 
@@ -34,11 +34,12 @@ export class BoardView extends Container {
       if(Boolean(cell.figure)) {
         const cellView = this.getCell(cell.id);
 
-        const textureName = `pawn_figure_white`;
-        const figure = new PawnFigure(cellView, { textureName, spriteScale: this.figureScales});
+        const {name, side} = cell.figure;
+        const textureName = `${name}_figure_${side}`;
+        const figure = new BaseFigure({name, cellView, textureName, side: cell.figure.side, spriteScale: this.figureScales});
 
         cellView.figure = figure;
-        this._figures.push(figure);
+        this.figures.push(figure);
         this.figureContainer.addChild(figure);
       }
     })
@@ -89,5 +90,13 @@ export class BoardView extends Container {
 
   getCell(id) {
     return this._cells.filter(cell => cell.id === id)[0];
+  }
+
+  getCells(cells) {
+    const idArray = cells.map(cell => cell.id);
+
+    if(idArray.length === 0) return;
+
+    return this._cells.filter(cell => idArray.includes(cell.id));
   }
 }

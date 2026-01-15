@@ -1,8 +1,8 @@
 export const eChessFigure = {
-  PAWN: 1,
-  ROOK: 2,
-  KNIGHT: 3,
-  BISHOP: 4,
-  QUEEN: 5,
-  KING: 6
+  PAWN: 'pawn',
+  ROOK: 'rook',
+  KNIGHT: 'knight',
+  BISHOP: 'bishop',
+  QUEEN: 'queen',
+  KING: 'king'
 }

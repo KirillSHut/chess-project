@@ -1,9 +1,15 @@
 import { eChessFigure } from '../enums/eChessFigure.js';
 
-export const pawnMovePattern = [
+export const whitePawnMovePattern = [
   [
     {row: +1, column: 0},
-    {row: +1, column: 0, condition: ({row}) => {return row === 7 || row === 2}},
+    {row: +2, column: 0, condition: ({row}) => {return row === 2}},
+  ]
+];
+export const blackPawnMovePattern = [
+  [
+    {row: -1, column: 0},
+    {row: -2, column: 0, condition: ({row}) => {return row === 7}},
   ]
 ];
 export const rookMovePattern = [
@@ -137,7 +143,7 @@ export const kingMovePattern = [
 ];
 
 export const figureMoveConfig = {
-  [eChessFigure.PAWN]: pawnMovePattern,
+  [eChessFigure.PAWN]: { white: whitePawnMovePattern,black: blackPawnMovePattern },
   [eChessFigure.ROOK]: rookMovePattern,
   [eChessFigure.KNIGHT]: knightMovePattern,
   [eChessFigure.BISHOP]: bishopMovePattern,
