@@ -30,6 +30,9 @@ export class BoardView extends Container {
   }
 
   initFigures(cells) {
+    this.figures = [];
+    this.figureContainer.removeChildren();
+
     cells.forEach(cell => {
       if(Boolean(cell.figure)) {
         const cellView = this.getCell(cell.id);
@@ -51,8 +54,7 @@ export class BoardView extends Container {
       const cellContainer = new CellContainer(cell, {
         cellSizes: this.cellSizes,
         textureName: `${cellColor}_cell`,
-        dotColor: 0xFF0000,
-        dotSize: {width: 30, height: 30},
+        rectColor: 0xFF0000,
       });
 
       cellContainer.x = (cell.column - 1) * this.cellSizes.width + (cell.column === 1 ? 0 : this.cellsPaddings * (cell.column - 1));
@@ -98,5 +100,14 @@ export class BoardView extends Container {
     if(idArray.length === 0) return;
 
     return this._cells.filter(cell => idArray.includes(cell.id));
+  }
+
+  get cells() {
+    return this._cells;
+  }
+
+  clearFigures() {
+    this.figures = [];
+    this.figureContainer.removeChildren();
   }
 }

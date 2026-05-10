@@ -10,6 +10,8 @@ export class BaseFigure extends Container {
     this._spriteScale = spriteScale;
     this._side = side;
 
+    this.hasMoved = false;
+
     this.onClick = () => {};
 
     this._init();
@@ -66,5 +68,9 @@ export class BaseFigure extends Container {
 
   get side() {
     return this._side;
+  }
+
+  set side(value) {
+    this._side = value;
   }
 }
