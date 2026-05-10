@@ -1,11 +1,11 @@
-import { BoardModel } from '../../models/BoardModel.js';
-import { BoardView } from '../../view/BoardView.js';
+import { ChessEngine } from '../../models/ChessEngine.js';
+import { ControllerView } from '../../view/ControllerView.js';
 
 /**
- * ControllerBoard coordinates the BoardModel (pure logic) and BoardView (Pixi rendering).
+ * ControllerGame coordinates the ChessEngine (pure logic) and ControllerView (Pixi rendering).
  * It also owns the turn system and simple bot integration for now.
  */
-export class ControllerBoard {
+export class ControllerGame {
   constructor(stage, { playerSide = 'white', botSide = 'black', botEnabled = true } = {}) {
     this.stage = stage;
 
@@ -21,10 +21,10 @@ export class ControllerBoard {
   }
 
   init() {
-    this.BoardModel = new BoardModel();
-    this.BoardView = new BoardView(this.stage);
+    this.ChessEngine = new ChessEngine();
+    this.ControllerView = new ControllerView(this.stage);
 
-    this.BoardView.initFigures(this.BoardModel.cells);
+    this.ControllerView.initFigures(this.ChessEngine.cells);
 
     this._activateFigures();
   }
@@ -46,11 +46,11 @@ export class ControllerBoard {
   makeMove(fromId, toId, side) {
     if (side !== this.currentTurn) return { success: false, reason: 'not_your_turn' };
 
-    if (!this.BoardModel.isMoveLegal(fromId, toId, side)) {
+    if (!this.ChessEngine.isMoveLegal(fromId, toId, side)) {
       return { success: false, reason: 'illegal_move' };
     }
 
-    const result = this.BoardModel.makeMove(fromId, toId, side);
+    const result = this.ChessEngine.makeMove(fromId, toId, side);
     if (!result.success) return result;
 
     this._syncViewWithModel();
@@ -86,12 +86,12 @@ export class ControllerBoard {
    */
 
   _activateFigures() {
-    this.BoardView.figures.forEach(figure => {
+    this.ControllerView.figures.forEach(figure => {
       figure.activate();
       figure.onClick = this._onFigureClick.bind(this);
     });
 
-    this.BoardView.cells.forEach(cellView => {
+    this.ControllerView.cells.forEach(cellView => {
       cellView.onClick = this._onCellClick.bind(this);
     });
   }
@@ -113,7 +113,7 @@ export class ControllerBoard {
 
     this.selectedFigure = figure;
 
-    const availableMoves = this.BoardModel.getAvailableMoves(
+    const availableMoves = this.ChessEngine.getAvailableMoves(
       {
         figureName: figure.figureName,
         side: figure.side,
@@ -122,7 +122,7 @@ export class ControllerBoard {
       this.currentTurn,
     );
 
-    const cellViews = this.BoardView.getCells(availableMoves) || [];
+    const cellViews = this.ControllerView.getCells(availableMoves) || [];
 
     cellViews.forEach(cellView => {
       cellView.activate();
@@ -157,8 +157,8 @@ export class ControllerBoard {
 
   _syncViewWithModel() {
     // Remove all existing figure views
-    this.BoardView.clearFigures();
-    this.BoardView.initFigures(this.BoardModel.cells);
+    this.ControllerView.clearFigures();
+    this.ControllerView.initFigures(this.ChessEngine.cells);
     this._activateFigures();
   }
 
@@ -182,10 +182,10 @@ export class ControllerBoard {
   _getAllLegalMovesForSide(side) {
     const moves = [];
 
-    this.BoardModel.cells.forEach(cell => {
+    this.ChessEngine.cells.forEach(cell => {
       if (!cell.figure || cell.figure.side !== side) return;
 
-      const legalTargets = this.BoardModel.getAvailableMoves(
+      const legalTargets = this.ChessEngine.getAvailableMoves(
         {
           figureName: cell.figure.name,
           side,

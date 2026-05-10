@@ -3,10 +3,10 @@ import { eChessFigure } from '../enums/eChessFigure.js';
 import { figureMoveConfig } from '../configs/figureMoveConfig.js';
 
 /**
- * BoardModel stores the complete logical state of the chess board.
+ * ChessEngine stores the complete logical state of the chess board.
  * It is intentionally UI‑agnostic so it can later be reused for multiplayer / networking.
  */
-export class BoardModel {
+export class ChessEngine {
   constructor() {
     /**
      * Flat array of 64 cell objects.
@@ -534,7 +534,7 @@ export class BoardModel {
   }
 
   _clone() {
-    const clone = new BoardModel();
+    const clone = new ChessEngine();
     clone._cells = this._cells.map(cell => ({
       ...cell,
       figure: cell.figure ? { ...cell.figure } : null,

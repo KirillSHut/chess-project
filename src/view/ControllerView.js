@@ -1,10 +1,9 @@
 import { Container } from 'pixi.js';
 import { chessCells } from '../configs/chessCells.js';
 import { CellContainer } from '../controllers/components/Cell.js';
-import { PawnFigure } from '../controllers/components/figures/PawnFigure.js';
 import { BaseFigure } from '../controllers/components/figures/BaseFigure.js';
 
-export class BoardView extends Container {
+export class ControllerView extends Container {
   constructor(stage) {
     super();
 

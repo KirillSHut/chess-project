@@ -1,6 +1,6 @@
 import { Assets } from 'pixi.js';
 import { assetsConfig } from './configs/assetsConfig.js';
-import { ControllerBoard } from './controllers/board/ControllerBoard.js';
+import { ControllerGame } from './controllers/game/ControllerGame.js';
 
 export class Game {
   constructor(app) {
@@ -12,14 +12,14 @@ export class Game {
   }
 
   init() {
-    this.ControllerBoard = new ControllerBoard(this.stage, {
+    this.ControllerGame = new ControllerGame(this.stage, {
       playerSide: 'white',
       botSide: 'black',
       botEnabled: true,
     });
 
-    this.ControllerBoard.init();
-    this.ControllerBoard.onGameEnd = ({ status, winnerSide }) => {
+    this.ControllerGame.init();
+    this.ControllerGame.onGameEnd = ({ status, winnerSide }) => {
       this.endGame(status, winnerSide);
     };
 
@@ -40,7 +40,7 @@ export class Game {
     this._isStarted = true;
     this._isFinished = false;
 
-    this.ControllerBoard.startGame();
+    this.ControllerGame.startGame();
   }
 
   makeMove(fromId, toId, side) {
@@ -48,12 +48,12 @@ export class Game {
       return { success: false, reason: 'game_finished' };
     }
 
-    return this.ControllerBoard.makeMove(fromId, toId, side);
+    return this.ControllerGame.makeMove(fromId, toId, side);
   }
 
   botMove() {
     if (this._isFinished) return;
-    this.ControllerBoard.botMove();
+    this.ControllerGame.botMove();
   }
 
   endGame(status, winnerSide) {
