@@ -3,9 +3,10 @@ import { assetsConfig } from './configs/assetsConfig.js';
 import { ControllerGame } from './controllers/game/ControllerGame.js';
 
 export class Game {
-  constructor(app) {
+  constructor(app, { botDifficulty = 'random' } = {}) {
     this.app = app;
     this.stage = app.stage;
+    this.botDifficulty = botDifficulty;
 
     this._isStarted = false;
     this._isFinished = false;

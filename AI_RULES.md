@@ -2,11 +2,12 @@
 
 # Project Overview
 
-This project is a browser chess game built with JavaScript and PixiJS.
+This project is a browser chess game built with JavaScript, React, and PixiJS.
 
 Main technologies:
 
 - JavaScript ES modules
+- React
 - PixiJS
 - Webpack
 - ESLint / Prettier
@@ -14,6 +15,7 @@ Main technologies:
 The current implementation contains:
 
 - `ChessEngine` as the model and chess-rule source of truth
+- React application shell in `src/ui`
 - MVC-style coordination through `ControllerGame`
 - PixiJS board and piece rendering through `ControllerView`
 - `CellContainer` and `BaseFigure` Pixi components
@@ -24,7 +26,6 @@ The current implementation contains:
 The project does not currently contain:
 
 - TypeScript
-- React
 - Server-side logic
 - WebSocket / Socket.IO multiplayer
 - Dedicated AI modules beyond random move selection
@@ -108,9 +109,22 @@ They currently handle:
 
 These components should stay visual and input-focused. They should not contain chess rules, turn logic, or bot logic.
 
+## React UI Shell
+
+`src/ui` owns application-level screens and menu navigation.
+
+It currently handles:
+
+- Main menu
+- Bot difficulty menu
+- Multiplayer placeholder
+- Mounting the PixiJS game screen after choosing Random bot difficulty
+
+React must stay an application shell. Do not move chess rules, board rendering, or MVC game flow into React components.
+
 ## Game Bootstrap
 
-`src/Game.js` and `src/main.js` bootstrap PixiJS, assets, resizing, and top-level game lifecycle.
+`src/main.js` bootstraps React. `src/ui/GameScreen.jsx` creates the PixiJS application when the game screen is opened. `src/Game.js` owns the top-level chess game lifecycle.
 
 They currently handle:
 
@@ -120,7 +134,7 @@ They currently handle:
 - Game initialization
 - Simple game-end logging
 
-Keep bootstrap files focused on application setup and top-level lifecycle.
+Keep bootstrap files focused on application setup and top-level lifecycle. Keep React screen state separate from chess state.
 
 ---
 
@@ -169,7 +183,7 @@ These are acceptable for the current project size, but they are the areas to imp
 
 Use JavaScript ES modules. Do not migrate the project to TypeScript unless explicitly requested.
 
-Do not introduce React, Redux, Socket.IO, a server, or a new framework unless the task explicitly asks for that feature.
+Do not introduce Redux, Zustand, MobX, Socket.IO, a server, or another framework unless the task explicitly asks for that feature.
 
 Use the configured ESLint and Prettier setup for consistency:
 
@@ -186,7 +200,8 @@ Keep the current responsibilities:
 - `ControllerGame` coordinates game flow.
 - `ControllerView` renders board and figures.
 - Pixi components handle visuals and pointer events.
-- `Game` and `main` handle app bootstrap and lifecycle.
+- React components handle menus and screen navigation.
+- `Game` and `GameScreen` handle Pixi game bootstrap and lifecycle.
 
 Prefer incremental changes over large rewrites.
 
@@ -252,6 +267,22 @@ View code must not:
 - Decide checkmate or stalemate
 - Generate bot moves
 - Store authoritative chess state
+
+## React UI Rules
+
+React components may:
+
+- Render menus, buttons, and placeholder screens
+- Hold simple screen-selection state with `useState`
+- Mount and unmount the PixiJS game through `GameScreen`
+
+React components must not:
+
+- Validate chess moves
+- Render the chess board or pieces
+- Own engine state
+- Import `ChessEngine` directly for gameplay decisions
+- Add complex routing or global state libraries for simple menu flow
 
 ## Component Rules
 
@@ -367,7 +398,8 @@ Do NOT:
 
 - Rewrite the whole project for small tasks
 - Migrate to TypeScript without explicit instruction
-- Add React or another UI framework without explicit instruction
+- Add another UI framework without explicit instruction
+- Rewrite the PixiJS chess board in React
 - Add networking or server authority rules to code that has no multiplayer feature yet
 - Put PixiJS objects inside `ChessEngine`
 - Put chess-rule validation inside view components

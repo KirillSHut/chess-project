@@ -54,7 +54,18 @@ export default (_env, argv) => {
     },
 
     module: {
-      rules: [],
+      rules: [
+        {
+          test: /\.(js|jsx)$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: [['@babel/preset-react', { runtime: 'automatic' }]],
+            },
+          },
+        },
+      ],
     },
     resolve: {
       extensions: ['.js', '.jsx'],

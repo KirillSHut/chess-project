@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginPrettier from 'eslint-plugin-prettier';
+import reactPlugin from 'eslint-plugin-react';
 
 export default [
   {
@@ -9,10 +10,15 @@ export default [
   js.configs.recommended,
   eslintConfigPrettier,
   {
-    files: ['**/*.{js,mjs}'],
+    files: ['**/*.{js,jsx,mjs}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
       globals: {
         console: 'readonly',
         document: 'readonly',
@@ -23,9 +29,16 @@ export default [
     },
     plugins: {
       prettier: eslintPluginPrettier,
+      react: reactPlugin,
     },
     rules: {
       'prettier/prettier': 'error',
+      'react/jsx-uses-vars': 'error',
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
   },
 ];

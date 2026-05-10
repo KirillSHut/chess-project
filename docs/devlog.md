@@ -27,3 +27,17 @@ The project should keep the current MVC-style structure:
 - Pixi components stay visual and input-focused.
 
 The next meaningful architecture improvement should be tests around `ChessEngine`, not a rewrite.
+
+### React Shell Integration
+
+- Added React as a simple application shell for menu screens.
+- Kept PixiJS responsible for chess rendering.
+- Kept chess logic outside React components.
+- Added main menu, bot difficulty menu, multiplayer placeholder, and game screen.
+- Added Webpack JSX support through Babel.
+
+Current UI rule:
+
+- React owns screen navigation and menu presentation.
+- `GameScreen` is the bridge that mounts PixiJS.
+- The existing MVC chess implementation remains responsible for gameplay.
