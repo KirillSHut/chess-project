@@ -1,7 +1,7 @@
 import { Container, Sprite } from 'pixi.js';
 
 export class BaseFigure extends Container {
-  constructor({name, cellView, textureName, side, spriteScale }) {
+  constructor({ name, cellView, textureName, side, spriteScale }) {
     super();
 
     this._figureName = name;
@@ -9,8 +9,6 @@ export class BaseFigure extends Container {
     this._textureName = textureName;
     this._spriteScale = spriteScale;
     this._side = side;
-
-    this.hasMoved = false;
 
     this.onClick = () => {};
 
@@ -27,14 +25,14 @@ export class BaseFigure extends Container {
     this.pivot.set(this.width / 2, this.height / 2);
 
     sprite.anchor.set(0.5);
-    if(this._spriteScale) sprite.scale.set(this._spriteScale)
+    if (this._spriteScale) sprite.scale.set(this._spriteScale);
 
     this.addChild(sprite);
   }
 
   _addListeners() {
     this.on('pointertap', () => this.onClick(this));
-  };
+  }
 
   updatePositions() {
     this.x = this.cellView.x + this.cellView.width / 2;

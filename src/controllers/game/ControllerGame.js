@@ -86,19 +86,19 @@ export class ControllerGame {
    */
 
   _activateFigures() {
-    this.ControllerView.figures.forEach(figure => {
+    this.ControllerView.figures.forEach((figure) => {
       figure.activate();
       figure.onClick = this._onFigureClick.bind(this);
     });
 
-    this.ControllerView.cells.forEach(cellView => {
+    this.ControllerView.cells.forEach((cellView) => {
       cellView.onClick = this._onCellClick.bind(this);
     });
   }
 
   _onFigureClick(figure) {
     if (figure.side !== this.currentTurn) {
-      if(this.selectedFigure) {
+      if (this.selectedFigure) {
         this._onCellClick(figure.cellView);
       }
       return;
@@ -124,7 +124,7 @@ export class ControllerGame {
 
     const cellViews = this.ControllerView.getCells(availableMoves) || [];
 
-    cellViews.forEach(cellView => {
+    cellViews.forEach((cellView) => {
       cellView.activate();
       this.activeMoveCells.push(cellView);
     });
@@ -149,7 +149,7 @@ export class ControllerGame {
 
   _clearSelection() {
     this.selectedFigure = null;
-    this.activeMoveCells.forEach(cellView => {
+    this.activeMoveCells.forEach((cellView) => {
       cellView.deactivate();
     });
     this.activeMoveCells = [];
@@ -182,7 +182,7 @@ export class ControllerGame {
   _getAllLegalMovesForSide(side) {
     const moves = [];
 
-    this.ChessEngine.cells.forEach(cell => {
+    this.ChessEngine.cells.forEach((cell) => {
       if (!cell.figure || cell.figure.side !== side) return;
 
       const legalTargets = this.ChessEngine.getAvailableMoves(
@@ -194,7 +194,7 @@ export class ControllerGame {
         side,
       );
 
-      legalTargets.forEach(target => {
+      legalTargets.forEach((target) => {
         moves.push({
           fromId: cell.id,
           toId: target.id,

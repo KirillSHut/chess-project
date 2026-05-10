@@ -27,7 +27,7 @@ export class Game {
   }
 
   async loadAssets() {
-    await Assets.load(assetsConfig)
+    await Assets.load(assetsConfig);
   }
 
   /**

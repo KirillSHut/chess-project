@@ -15,6 +15,7 @@ dist-ssr
 # Custom
 .token
 .AI_RULES.md
+docs/roadmap.md
 
 # Editor directories and files
 .vscode/*

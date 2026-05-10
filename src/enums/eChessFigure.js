@@ -4,5 +4,5 @@ export const eChessFigure = {
   KNIGHT: 'knight',
   BISHOP: 'bishop',
   QUEEN: 'queen',
-  KING: 'king'
-}
+  KING: 'king',
+};

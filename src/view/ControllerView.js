@@ -9,7 +9,7 @@ export class ControllerView extends Container {
 
     this.stage = stage;
     this.cellsPaddings = 10;
-    this.cellSizes = {width: 100, height: 100};
+    this.cellSizes = { width: 100, height: 100 };
     this.figureScales = 2;
 
     this.init();
@@ -32,19 +32,25 @@ export class ControllerView extends Container {
     this.figures = [];
     this.figureContainer.removeChildren();
 
-    cells.forEach(cell => {
-      if(Boolean(cell.figure)) {
+    cells.forEach((cell) => {
+      if (cell.figure) {
         const cellView = this.getCell(cell.id);
 
-        const {name, side} = cell.figure;
+        const { name, side } = cell.figure;
         const textureName = `${name}_figure_${side}`;
-        const figure = new BaseFigure({name, cellView, textureName, side: cell.figure.side, spriteScale: this.figureScales});
+        const figure = new BaseFigure({
+          name,
+          cellView,
+          textureName,
+          side: cell.figure.side,
+          spriteScale: this.figureScales,
+        });
 
         cellView.figure = figure;
         this.figures.push(figure);
         this.figureContainer.addChild(figure);
       }
-    })
+    });
   }
 
   _initCells() {
@@ -53,11 +59,15 @@ export class ControllerView extends Container {
       const cellContainer = new CellContainer(cell, {
         cellSizes: this.cellSizes,
         textureName: `${cellColor}_cell`,
-        rectColor: 0xFF0000,
+        rectColor: 0xff0000,
       });
 
-      cellContainer.x = (cell.column - 1) * this.cellSizes.width + (cell.column === 1 ? 0 : this.cellsPaddings * (cell.column - 1));
-      cellContainer.y = -(cell.row - 8) * this.cellSizes.height + (cell.row === 8 ? 0 : this.cellsPaddings * -(cell.row - 8));
+      cellContainer.x =
+        (cell.column - 1) * this.cellSizes.width +
+        (cell.column === 1 ? 0 : this.cellsPaddings * (cell.column - 1));
+      cellContainer.y =
+        -(cell.row - 8) * this.cellSizes.height +
+        (cell.row === 8 ? 0 : this.cellsPaddings * -(cell.row - 8));
 
       this._cells.push(cellContainer);
       this.cellsContainer.addChild(cellContainer);
@@ -74,31 +84,31 @@ export class ControllerView extends Container {
   }
 
   getCellColor({ row, column }) {
-    if(row % 2 === 0) {
-      if(column % 2 === 0) {
-        return 'black'
+    if (row % 2 === 0) {
+      if (column % 2 === 0) {
+        return 'black';
       } else {
-        return 'white'
+        return 'white';
       }
     } else {
-      if(column % 2 === 0) {
-        return 'white'
+      if (column % 2 === 0) {
+        return 'white';
       } else {
-        return 'black'
+        return 'black';
       }
     }
   }
 
   getCell(id) {
-    return this._cells.filter(cell => cell.id === id)[0];
+    return this._cells.filter((cell) => cell.id === id)[0];
   }
 
   getCells(cells) {
-    const idArray = cells.map(cell => cell.id);
+    const idArray = cells.map((cell) => cell.id);
 
-    if(idArray.length === 0) return;
+    if (idArray.length === 0) return;
 
-    return this._cells.filter(cell => idArray.includes(cell.id));
+    return this._cells.filter((cell) => idArray.includes(cell.id));
   }
 
   get cells() {

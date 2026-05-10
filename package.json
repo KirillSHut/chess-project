@@ -7,6 +7,9 @@
     "start": "npm run dev",
     "build": "npm run lint && webpack --mode=production",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "dev": "webpack serve --mode=development"
   },
   "dependencies": {

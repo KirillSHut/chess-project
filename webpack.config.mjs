@@ -1,28 +1,28 @@
-import path from "path";
+import path from 'path';
 
-import CopyPlugin from "copy-webpack-plugin";
-import HtmlWebpackPlugin from "html-webpack-plugin";
-import TerserPlugin from "terser-webpack-plugin";
+import CopyPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
 
 export default (_env, argv) => {
   return {
-    stats: "minimal", // Keep console output easy to read.
-    entry: "./src/main.js", // Your program entry point
+    stats: 'minimal', // Keep console output easy to read.
+    entry: './src/main.js', // Your program entry point
 
     // Your build destination
     output: {
-      path: path.resolve(process.cwd(), "dist"),
-      filename: "bundle.js",
+      path: path.resolve(process.cwd(), 'dist'),
+      filename: 'bundle.js',
       clean: true,
     },
 
     // Config for your testing server
     devServer: {
       compress: true,
-      allowedHosts: "all", // If you are using WebpackDevServer as your production server, please fix this line!
+      allowedHosts: 'all', // If you are using WebpackDevServer as your production server, please fix this line!
       static: false,
       client: {
-        logging: "warn",
+        logging: 'warn',
         overlay: {
           errors: true,
           warnings: false,
@@ -30,18 +30,18 @@ export default (_env, argv) => {
         progress: true,
       },
       port: 5143,
-      host: "0.0.0.0",
+      host: '0.0.0.0',
     },
 
     // Web games are bigger than pages, disable the warnings that our game is too big.
     performance: { hints: false },
 
     // Enable sourcemaps while debugging
-    devtool: argv.mode === "development" ? "eval-source-map" : undefined,
+    devtool: argv.mode === 'development' ? 'eval-source-map' : undefined,
 
     // Minify the code when making a final build
     optimization: {
-      minimize: argv.mode === "production",
+      minimize: argv.mode === 'production',
       minimizer: [
         new TerserPlugin({
           terserOptions: {
@@ -57,18 +57,18 @@ export default (_env, argv) => {
       rules: [],
     },
     resolve: {
-      extensions: [".js", ".jsx"],
+      extensions: ['.js', '.jsx'],
     },
 
     plugins: [
       // Copy our static assets to the final build
       new CopyPlugin({
-        patterns: [{ from: "public/" }],
+        patterns: [{ from: 'public/' }],
       }),
 
       // Make an index.html from the template
       new HtmlWebpackPlugin({
-        template: "./index.ejs",
+        template: './index.ejs',
         hash: true,
         minify: false,
       }),

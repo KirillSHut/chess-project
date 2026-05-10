@@ -2,348 +2,405 @@
 
 # Project Overview
 
-This project is an intelligent multiplayer chess system built with web technologies.
+This project is a browser chess game built with JavaScript and PixiJS.
 
 Main technologies:
+
+- JavaScript ES modules
+- PixiJS
+- Webpack
+- ESLint / Prettier
+
+The current implementation contains:
+
+- `ChessEngine` as the model and chess-rule source of truth
+- MVC-style coordination through `ControllerGame`
+- PixiJS board and piece rendering through `ControllerView`
+- `CellContainer` and `BaseFigure` Pixi components
+- Turn management
+- Full playable local game flow
+- A random-move AI bot integrated in the game controller
+
+The project does not currently contain:
+
 - TypeScript
 - React
-- PixiJS
-- Node.js
-- WebSocket / Socket.IO
+- Server-side logic
+- WebSocket / Socket.IO multiplayer
+- Dedicated AI modules beyond random move selection
+- A separate state-management library
 
-The project contains:
-- Chess engine
-- AI opponents
-- Multiplayer system
-- PixiJS rendering layer
-- React UI layer
+Keep future changes aligned with the real implementation. Do not document or build idealized systems unless the task explicitly asks for them.
 
-The codebase must remain modular, deterministic, and scalable.
+Related project docs:
+
+- `docs/architecture.md` explains the current architecture and module boundaries.
+- `docs/devlog.md` records architecture decisions and foundation changes.
 
 ---
 
-# Core Engineering Principles
+# Current Architecture
 
-## Separation of Responsibilities
+## Model: `ChessEngine`
 
-Strictly separate:
-- Chess logic
-- Rendering
-- UI
-- Networking
-- AI logic
+`src/models/ChessEngine.js` stores the logical board state and owns chess rules.
 
-Never mix responsibilities.
+It currently handles:
 
-Examples:
-- Chess engine must not know about PixiJS
-- PixiJS objects must not contain chess rules
-- AI must not directly manipulate sprites
-- Multiplayer layer must not directly modify UI
+- Initial board setup
+- Legal move generation
+- Turn-side filtering for available moves
+- Move validation
+- Move application
+- Check, checkmate, and stalemate detection
+- Castling
+- En passant
+- Basic pawn promotion, defaulting to queen
+- Cloned simulations for king-safety validation
+
+The engine must remain independent from PixiJS, DOM APIs, controller classes, and rendering details.
+
+The engine currently uses mutable internal cell objects. Preserve this decision for incremental work, but avoid leaking extra mutable state or allowing view objects to become part of engine state.
+
+## Game Controller: `ControllerGame`
+
+`src/controllers/game/ControllerGame.js` coordinates the model and view.
+
+It currently owns:
+
+- `ChessEngine` creation
+- `ControllerView` creation
+- Current turn
+- Selected figure
+- Highlighted move cells
+- Human click handling
+- View synchronization after moves
+- Random bot move selection
+- End-game callback dispatch
+
+This class is intentionally the main integration layer. It is acceptable for it to know about both engine and view, but avoid adding unrelated responsibilities such as asset loading, DOM layout, networking, or complex AI search here.
+
+## View: `ControllerView`
+
+`src/view/ControllerView.js` owns PixiJS board and figure rendering.
+
+It currently handles:
+
+- Board cell creation
+- Figure creation from engine cell data
+- Pixi containers
+- Board positioning
+- Mapping engine cells to view cells
+- Clearing and rebuilding figures after model changes
+
+The view may read model-shaped data passed into it, but it must not validate chess rules or decide game outcomes.
+
+## Pixi Components
+
+`src/controllers/components/Cell.js` and `src/controllers/components/figures/BaseFigure.js` are PixiJS display components.
+
+They currently handle:
+
+- Texture and sprite creation
+- Pointer events
+- Visual activation / deactivation
+- Piece and cell positioning
+
+These components should stay visual and input-focused. They should not contain chess rules, turn logic, or bot logic.
+
+## Game Bootstrap
+
+`src/Game.js` and `src/main.js` bootstrap PixiJS, assets, resizing, and top-level game lifecycle.
+
+They currently handle:
+
+- Asset loading
+- Pixi application setup
+- Stage scaling
+- Game initialization
+- Simple game-end logging
+
+Keep bootstrap files focused on application setup and top-level lifecycle.
+
+---
+
+# What Is Implemented Well
+
+- The chess engine is UI-agnostic and does not import PixiJS.
+- Move validation and move application are centralized in `ChessEngine`.
+- The controller is the integration point between engine and Pixi view.
+- The view is mostly rendering-focused and rebuilds itself from engine state.
+- The random bot uses legal engine moves instead of inventing move rules.
+- The project already has a playable game loop with turn changes and end-game handling.
+- Special chess rules such as castling, en passant, checkmate, stalemate, and promotion are represented in the engine.
+
+Preserve these decisions unless a task specifically requires a broader refactor.
+
+---
+
+# Current Architectural Problems
+
+## Mixed Responsibilities
+
+- `ControllerGame` owns both user interaction flow and random AI move selection.
+- `ControllerGame` also handles selection state, legal-move highlighting, turn advancement, and end-game dispatch.
+- `ControllerView` creates board cells and figures, stores layout constants, maps model cells to view cells, and manages Pixi containers.
+- `CellContainer` and `BaseFigure` expose click callbacks directly, which couples input handling closely to Pixi display objects.
+- `ChessEngine.getAvailableMoves` accepts an object shaped like a view figure, including `cellView`. This works today, but it leaks view terminology into the engine API.
+
+These are acceptable for the current project size, but they are the areas to improve first as the code grows.
+
+## Scaling Risks
+
+- Full figure rebuilds are acceptable temporarily, but future animation systems should move toward incremental synchronization.
+- Random bot logic inside `ControllerGame` will become hard to extend if greedy, minimax, or difficulty levels are added.
+- Engine cells are mutable and exposed through the `cells` getter. External code should treat them as read-only snapshots even though they are real objects today.
+- There are no automated tests yet for critical chess rules.
+- There is no dedicated move history or notation layer.
+- Promotion is automatic unless `promotionTo` is passed programmatically; there is no promotion UI yet.
+- Game-end handling currently logs through `Game.endGame`; there is no visible end-game UI.
+- Naming such as `ControllerView` and storing components under `controllers/components` is workable, but the boundary between view components and controllers should stay clear.
 
 ---
 
 # Architecture Rules
 
-## Chess Engine
+## JavaScript Only
 
-Chess engine is the source of truth.
+Use JavaScript ES modules. Do not migrate the project to TypeScript unless explicitly requested.
 
-The engine:
-- validates moves
-- stores game state
-- detects check/checkmate/stalemate
-- handles castling
-- handles en passant
-- handles promotion
+Do not introduce React, Redux, Socket.IO, a server, or a new framework unless the task explicitly asks for that feature.
+
+Use the configured ESLint and Prettier setup for consistency:
+
+- `npm run lint`
+- `npm run lint:fix`
+- `npm run format`
+- `npm run format:check`
+
+## Respect the Current MVC Structure
+
+Keep the current responsibilities:
+
+- `ChessEngine` owns chess state and rules.
+- `ControllerGame` coordinates game flow.
+- `ControllerView` renders board and figures.
+- Pixi components handle visuals and pointer events.
+- `Game` and `main` handle app bootstrap and lifecycle.
+
+Prefer incremental changes over large rewrites.
+
+## Chess Engine Rules
+
+The engine is the source of truth for legal chess state.
 
 Engine code must:
-- be deterministic
-- be pure whenever possible
-- not contain rendering code
-- not contain networking code
+
+- Validate moves
+- Apply moves
+- Track rule-specific state such as `hasMoved` and `_lastMove`
+- Detect check, checkmate, and stalemate
+- Stay independent from PixiJS, DOM, controller, and asset code
+
+Engine code should avoid:
+
+- Importing view or controller modules
+- Accepting Pixi display objects as inputs
+- Mutating state outside controlled engine methods
+- Adding UI-specific concepts
+
+When improving the engine API, prefer simple data inputs such as `fromId`, `toId`, `side`, and `figureName`.
+
+## Controller Rules
+
+`ControllerGame` may coordinate model and view, but it should not become a catch-all class.
+
+It may contain:
+
+- Turn flow
+- Selection flow
+- Calling engine methods
+- Calling view methods
+- Trigger bot actions, but bot decision logic should live outside the controller once multiple AI levels are introduced.
+- End-game dispatch
+
+Avoid adding:
+
+- Chess rule calculations
+- Pixi rendering internals
+- Asset loading
+- DOM layout logic
+- Networking logic
+- Complex AI search algorithms
+
+If bot logic grows beyond random move selection, move it into a small JavaScript module that receives engine state or legal moves and returns a move.
+
+## View Rules
+
+View code may:
+
+- Render cells and figures
+- Highlight legal target cells supplied by the controller
+- Attach pointer callbacks
+- Map cell ids to Pixi cell containers
+- Rebuild or update visual pieces from engine state
+
+View code must not:
+
+- Validate chess moves
+- Decide whose turn it is
+- Decide checkmate or stalemate
+- Generate bot moves
+- Store authoritative chess state
+
+## Component Rules
+
+Pixi components should stay small and visual.
+
+They may:
+
+- Create sprites and text labels
+- Position themselves
+- Emit interaction events
+- Show active / inactive visual state
+
+They must not:
+
+- Import `ChessEngine`
+- Know current turn
+- Generate legal moves
+- Apply game moves
+- Trigger bot decisions directly
 
 ---
 
-## Rendering Layer
+# AI Bot Rules
 
-PixiJS is rendering only.
+The current AI is a random legal-move bot implemented inside `ControllerGame`.
 
-Rendering layer:
-- displays board
-- displays pieces
-- plays animations
-- handles drag and drop visuals
+Rules for current bot work:
 
-Rendering layer must NOT:
-- validate chess moves
-- contain AI logic
-- contain multiplayer synchronization logic
+- Use `ChessEngine.getAvailableMoves` or another engine-owned legal move API.
+- Never generate pseudo-legal bot moves in the controller.
+- Never let the bot directly mutate engine cells or Pixi objects.
+- Keep random selection simple unless the task asks for stronger AI.
 
----
+If adding stronger AI later:
 
-## Multiplayer Layer
-
-Server is authoritative.
-
-Client must never be trusted for:
-- move validation
-- game state integrity
-- turn validation
-
-Server validates all moves.
-
-Multiplayer code must:
-- use event-driven architecture
-- support reconnecting
-- support synchronization
-- support room-based games
+- Start with a separate JavaScript module.
+- Pass it legal moves or model data, not Pixi objects.
+- Keep the first extraction small; do not introduce a full AI framework upfront.
 
 ---
 
-## AI System
-
-AI logic must be isolated.
-
-AI modules:
-- evaluate board states
-- generate legal moves
-- calculate best move
-
-AI must:
-- never access rendering
-- never modify UI
-- operate only on engine state
-
-Supported AI levels:
-- Random
-- Greedy
-- Minimax
-- Alpha-Beta pruning
-
----
 # State Management
 
-Game state must be immutable whenever possible.
+The current engine uses mutable internal objects. This is acceptable for now.
 
-Do not mutate:
-- board arrays
-- move objects
-- piece objects
+Rules:
 
-Prefer:
-- copied state
-- immutable updates
-- pure functions
+- Mutate board state only inside `ChessEngine` methods.
+- Treat `ChessEngine.cells` as read-only outside the engine.
+- Do not store Pixi objects in engine cells.
+- Do not let view state become authoritative.
+- Prefer cloning or simulation helpers for move validation that needs hypothetical board states.
 
-### Bad
-```js
-board[x][y] = piece;
-```
-
-### Good
-```js
-const newBoard = cloneBoard(board);
-```
+Avoid broad immutability rewrites unless they solve a concrete bug or testing need.
 
 ---
 
-# Function Design
+# Function and Class Design
 
 Functions should:
-- do one thing
-- be predictable
-- avoid hidden side effects
 
-Prefer pure functions.
+- Be small enough to understand locally
+- Have clear inputs and outputs
+- Avoid hidden cross-layer side effects
+- Use descriptive names
 
-### Bad
-```js
-movePieceAndPlayAnimation();
-```
+Classes should:
 
-### Good
-```js
-validateMove();
-applyMove();
-playMoveAnimation();
-```
+- Keep one primary responsibility
+- Follow existing project naming unless there is a concrete reason to rename
+- Avoid deep inheritance
+- Avoid generic manager classes
 
----
-
-# Class Design
-
-Prefer composition over inheritance.
-
-Avoid:
-- deep inheritance trees
-- god objects
-- massive manager classes
-
-Classes should have:
-- single responsibility
-- clear ownership
-- minimal dependencies
-
----
-
-# Code Style
-
-### Rules
-- Small functions
-- Descriptive naming
-- No magic numbers
-- Avoid duplicated code
-
-Use:
-- constants
-- enums-like objects
-- utility modules
-
----
-
-# Naming Conventions
-
-Use clear naming.
-
-### Good examples
-- ChessBoard
-- MoveValidator
-- BoardRenderer
-- MultiplayerService
-- MinimaxBot
-
-### Avoid
-- Manager
-- Utils
-- DataHandler
-- GenericService
-
----
-
-# Performance Rules
-
-Performance matters.
-
-Avoid:
-- unnecessary allocations
-- rerendering entire board
-- recalculating unchanged states
-
-Use:
-- memoization where useful
-- pooling if needed
-- incremental updates
+Do not introduce abstractions just because they may be useful later.
 
 ---
 
 # Testing Rules
 
-Critical chess logic must be testable.
+There is currently no test suite. When adding tests, prioritize engine behavior first.
 
-### Required test coverage
-- move validation
-- check/checkmate
-- castling
-- en passant
-- AI move generation
+Highest-value test targets:
 
-Rendering code does not require heavy testing.
+- Legal and illegal movement for every piece
+- Captures and blocked paths
+- Check prevention
+- Checkmate and stalemate
+- Castling rules
+- En passant
+- Promotion
+- Bot move selection using only legal moves
+
+Rendering code can be tested more lightly. Prefer engine tests before Pixi interaction tests.
 
 ---
 
-# AI Assistant Instructions
+# Incremental Improvement Priorities
 
-When generating code:
-- follow existing architecture
-- avoid rewriting unrelated code
-- do not introduce new patterns unnecessarily
-- preserve module boundaries
-- explain tradeoffs briefly
-- mention edge cases
-- prefer maintainability over cleverness
+Prefer improvements in this order:
 
-If architecture is unclear:
-- ask for clarification
-- do not invent large systems automatically
+1. Add focused tests around `ChessEngine`.
+2. Simplify engine inputs so they do not reference `cellView`.
+3. Extract random bot move choice only when adding more bot behavior.
+4. Improve view synchronization only when animations, performance, or UI features need it.
+5. Add visible game-end and promotion UI when requested.
+6. Add multiplayer only as a separate feature, with a clear server/client design.
 
 ---
 
 # Forbidden Patterns
 
 Do NOT:
-- mix rendering with chess logic
-- directly mutate shared state
-- create circular dependencies
-- use singleton abuse
-- place networking inside rendering classes
-- place PixiJS objects inside chess engine
+
+- Rewrite the whole project for small tasks
+- Migrate to TypeScript without explicit instruction
+- Add React or another UI framework without explicit instruction
+- Add networking or server authority rules to code that has no multiplayer feature yet
+- Put PixiJS objects inside `ChessEngine`
+- Put chess-rule validation inside view components
+- Let the bot directly manipulate sprites or engine internals
+- Create circular dependencies between model, controller, and view
+- Replace the current MVC structure with an unrelated architecture
 
 ---
 
-# Preferred Development Flow
+# AI Assistant Instructions
 
-1. Implement engine logic
-2. Add tests
-3. Connect rendering
-4. Add AI
-5. Add multiplayer
-6. Optimize performance
+When generating code:
 
----
+- Analyze the current implementation first
+- Follow the existing JavaScript style
+- Respect the MVC boundaries already present
+- Keep changes tightly scoped
+- Preserve reasonable existing decisions
+- Avoid unnecessary abstractions
+- Explain tradeoffs briefly
+- Mention relevant edge cases
+- Add tests when touching chess rules, if a test setup exists or is part of the task
 
-# Git Workflow
+If architecture is unclear:
 
-### Commit style examples
-```bash
-feat(engine): add bishop move validation
-feat(ai): implement minimax search
-fix(multiplayer): synchronize board state
-refactor(rendering): separate animation system
-```
-
-### Rules
-- Small commits
-- Clear commit messages
-- One responsibility per commit
-
----
-
-# Codex Prompting Rules
-
-When asking AI to generate code:
-- define task scope clearly
-- provide context
-- specify restrictions
-- request edge cases
-- request tradeoff explanations
-
-### Good prompt example
-```text
-Task:
-Implement legal rook movement validation.
-
-Requirements:
-- Cannot move through pieces
-- Cannot capture same color
-- Pure logic only
-- No rendering code
-- JavaScript only
-
-Output:
-- Full implementation
-- Short explanation
-- Edge cases considered
-```
+- Inspect the code before answering
+- Prefer small incremental changes
+- Ask for clarification only when a reasonable local decision would be risky
 
 ---
 
 # Project Goal
 
-The goal is to build:
-- scalable architecture
-- maintainable multiplayer chess platform
-- intelligent chess AI system
-- research-ready diploma project
+The current goal is a maintainable local PixiJS chess game with a clean enough architecture to grow gradually.
 
-Code quality and architecture are more important than short-term speed.
+Longer-term features such as stronger AI, multiplayer, timers, notation, animations, and richer UI should be added incrementally without pretending they already exist.

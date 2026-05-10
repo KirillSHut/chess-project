@@ -26,7 +26,7 @@ export class ChessEngine {
   }
 
   _init() {
-    this._cells = chessCells.map(cell => {
+    this._cells = chessCells.map((cell) => {
       return {
         ...cell,
         figure: null,
@@ -51,7 +51,9 @@ export class ChessEngine {
     };
 
     // White pieces
-    ['A2','B2','C2','D2','E2','F2','G2','H2'].forEach(id => place(id, eChessFigure.PAWN, 'white'));
+    ['A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2'].forEach((id) =>
+      place(id, eChessFigure.PAWN, 'white'),
+    );
     place('A1', eChessFigure.ROOK, 'white');
     place('H1', eChessFigure.ROOK, 'white');
     place('B1', eChessFigure.KNIGHT, 'white');
@@ -62,7 +64,9 @@ export class ChessEngine {
     place('E1', eChessFigure.KING, 'white');
 
     // Black pieces
-    ['A7','B7','C7','D7','E7','F7','G7','H7'].forEach(id => place(id, eChessFigure.PAWN, 'black'));
+    ['A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'].forEach((id) =>
+      place(id, eChessFigure.PAWN, 'black'),
+    );
     place('A8', eChessFigure.ROOK, 'black');
     place('H8', eChessFigure.ROOK, 'black');
     place('B8', eChessFigure.KNIGHT, 'black');
@@ -91,14 +95,19 @@ export class ChessEngine {
     }
 
     const fromCell = this.getCellById(cellView.id);
-    if (!fromCell || !fromCell.figure || fromCell.figure.side !== side || fromCell.figure.name !== figureName) {
+    if (
+      !fromCell ||
+      !fromCell.figure ||
+      fromCell.figure.side !== side ||
+      fromCell.figure.name !== figureName
+    ) {
       return [];
     }
 
     const pseudoLegalTargets = this._getPseudoLegalMovesFromCell(fromCell);
 
     // Filter out moves that would leave own king in check
-    const legalTargets = pseudoLegalTargets.filter(targetCell => {
+    const legalTargets = pseudoLegalTargets.filter((targetCell) => {
       const simulation = this._clone();
       simulation._applyMoveInternal(fromCell.id, targetCell.id, { isSimulation: true });
       return !simulation.isInCheck(side);
@@ -116,13 +125,16 @@ export class ChessEngine {
       return false;
     }
 
-    const legalTargets = this.getAvailableMoves({
-      figureName: fromCell.figure.name,
+    const legalTargets = this.getAvailableMoves(
+      {
+        figureName: fromCell.figure.name,
+        side,
+        cellView: { id: fromId },
+      },
       side,
-      cellView: { id: fromId },
-    }, side);
+    );
 
-    return Boolean(legalTargets.find(cell => cell.id === toId));
+    return Boolean(legalTargets.find((cell) => cell.id === toId));
   }
 
   /**
@@ -164,7 +176,7 @@ export class ChessEngine {
    */
   isInCheck(side) {
     const kingCell = this._cells.find(
-      cell => cell.figure && cell.figure.name === eChessFigure.KING && cell.figure.side === side,
+      (cell) => cell.figure && cell.figure.name === eChessFigure.KING && cell.figure.side === side,
     );
     if (!kingCell) return false;
 
@@ -182,11 +194,11 @@ export class ChessEngine {
   }
 
   getCellById(id) {
-    return this._cells.find(cell => cell.id === id);
+    return this._cells.find((cell) => cell.id === id);
   }
 
   getCell(row, column) {
-    return this._cells.find(cell => cell.row === row && cell.column === column);
+    return this._cells.find((cell) => cell.row === row && cell.column === column);
   }
 
   /**
@@ -211,7 +223,7 @@ export class ChessEngine {
 
     const moves = [];
 
-    movePattern.forEach(pattern => {
+    movePattern.forEach((pattern) => {
       for (const move of pattern) {
         const nextRow = fromCell.row + move.row;
         const nextColumn = fromCell.column + move.column;
@@ -257,7 +269,7 @@ export class ChessEngine {
     const captureLeft = this.getCell(fromCell.row + direction, fromCell.column - 1);
     const captureRight = this.getCell(fromCell.row + direction, fromCell.column + 1);
 
-    [captureLeft, captureRight].forEach(target => {
+    [captureLeft, captureRight].forEach((target) => {
       if (target && target.figure && target.figure.side !== side) {
         moves.push(target);
       }
@@ -266,7 +278,11 @@ export class ChessEngine {
     // Basic en passant (optional part) – only if there is a last move that was a two‑step pawn advance
     if (this._lastMove && this._lastMove.isTwoStepPawnMove) {
       const lastTo = this.getCellById(this._lastMove.toId);
-      if (lastTo && lastTo.row === fromCell.row && Math.abs(lastTo.column - fromCell.column) === 1) {
+      if (
+        lastTo &&
+        lastTo.row === fromCell.row &&
+        Math.abs(lastTo.column - fromCell.column) === 1
+      ) {
         const epTarget = this.getCell(fromCell.row + direction, lastTo.column);
         if (epTarget && !epTarget.figure) {
           moves.push(epTarget);
@@ -281,7 +297,7 @@ export class ChessEngine {
     const moves = [];
     const movePattern = figureMoveConfig[eChessFigure.KING];
 
-    movePattern.forEach(pattern => {
+    movePattern.forEach((pattern) => {
       for (const move of pattern) {
         const nextRow = fromCell.row + move.row;
         const nextColumn = fromCell.column + move.column;
@@ -316,8 +332,10 @@ export class ChessEngine {
         const fFile = this.getCell(rank, 6);
         const gFile = this.getCell(rank, 7);
         if (
-          fFile && gFile &&
-          !fFile.figure && !gFile.figure &&
+          fFile &&
+          gFile &&
+          !fFile.figure &&
+          !gFile.figure &&
           !this._isCellAttackedBySide(fFile, side === 'white' ? 'black' : 'white') &&
           !this._isCellAttackedBySide(gFile, side === 'white' ? 'black' : 'white')
         ) {
@@ -337,8 +355,12 @@ export class ChessEngine {
         const cFile = this.getCell(rank, 3);
         const dFile = this.getCell(rank, 4);
         if (
-          bFile && cFile && dFile &&
-          !bFile.figure && !cFile.figure && !dFile.figure &&
+          bFile &&
+          cFile &&
+          dFile &&
+          !bFile.figure &&
+          !cFile.figure &&
+          !dFile.figure &&
           !this._isCellAttackedBySide(cFile, side === 'white' ? 'black' : 'white') &&
           !this._isCellAttackedBySide(dFile, side === 'white' ? 'black' : 'white')
         ) {
@@ -355,7 +377,7 @@ export class ChessEngine {
       if (!cell.figure || cell.figure.side !== attackingSide) continue;
 
       const attackTargets = this._getAttackTargetsFromCell(cell);
-      if (attackTargets.find(c => c.id === targetCell.id)) {
+      if (attackTargets.find((c) => c.id === targetCell.id)) {
         return true;
       }
     }
@@ -399,7 +421,7 @@ export class ChessEngine {
         { row: -1, column: -1 },
       ];
 
-      deltas.forEach(d => {
+      deltas.forEach((d) => {
         const cell = this.getCell(fromCell.row + d.row, fromCell.column + d.column);
         if (cell) targets.push(cell);
       });
@@ -415,7 +437,7 @@ export class ChessEngine {
 
     const targets = [];
 
-    movePattern.forEach(pattern => {
+    movePattern.forEach((pattern) => {
       for (const move of pattern) {
         const nextCell = this.getCell(fromCell.row + move.row, fromCell.column + move.column);
         if (!nextCell) break;
@@ -436,11 +458,14 @@ export class ChessEngine {
   _sideHasAnyLegalMove(side) {
     for (const cell of this._cells) {
       if (!cell.figure || cell.figure.side !== side) continue;
-      const legalTargets = this.getAvailableMoves({
-        figureName: cell.figure.name,
+      const legalTargets = this.getAvailableMoves(
+        {
+          figureName: cell.figure.name,
+          side,
+          cellView: { id: cell.id },
+        },
         side,
-        cellView: { id: cell.id },
-      }, side);
+      );
       if (legalTargets.length > 0) {
         return true;
       }
@@ -482,7 +507,10 @@ export class ChessEngine {
     }
 
     // Castling rook movement
-    if (movingFigure.name === eChessFigure.KING && Math.abs(toCell.column - fromCell.column) === 2) {
+    if (
+      movingFigure.name === eChessFigure.KING &&
+      Math.abs(toCell.column - fromCell.column) === 2
+    ) {
       const side = movingFigure.side;
       const rank = side === 'white' ? 1 : 8;
       if (toCell.column === 7) {
@@ -535,7 +563,7 @@ export class ChessEngine {
 
   _clone() {
     const clone = new ChessEngine();
-    clone._cells = this._cells.map(cell => ({
+    clone._cells = this._cells.map((cell) => ({
       ...cell,
       figure: cell.figure ? { ...cell.figure } : null,
     }));
