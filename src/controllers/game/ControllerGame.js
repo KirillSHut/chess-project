@@ -4,6 +4,8 @@ import { RandomBot } from '../../ai/RandomBot.js';
 import { ChessEngine } from '../../models/ChessEngine.js';
 import { ControllerView } from '../../view/ControllerView.js';
 
+const BOT_THINK_DELAY_MS = 100;
+
 /**
  * ControllerGame coordinates the ChessEngine (pure logic) and ControllerView (Pixi rendering).
  * It also owns the turn system and simple bot integration for now.
@@ -24,8 +26,12 @@ export class ControllerGame {
     this.selectedFigure = null;
     this.activeMoveCells = [];
     this._isFinished = false;
+    this._isBotThinking = false;
+    this._botTurnToken = 0;
+    this._pendingBotTurnId = null;
 
     this.onGameEnd = () => {};
+    this.onBotThinkingChange = () => {};
   }
 
   init() {
@@ -43,6 +49,7 @@ export class ControllerGame {
    */
 
   startGame() {
+    this.cancelPendingBotTurn();
     this.currentTurn = 'white';
     this._isFinished = false;
     this._clearSelection();
@@ -54,6 +61,9 @@ export class ControllerGame {
    */
   makeMove(fromId, toId, side) {
     if (this._isFinished) return { success: false, reason: 'game_finished' };
+    if (this._isBotThinking && side !== this.botSide) {
+      return { success: false, reason: 'bot_thinking' };
+    }
     if (side !== this.currentTurn) return { success: false, reason: 'not_your_turn' };
 
     if (!this.ChessEngine.isMoveLegal(fromId, toId, side)) {
@@ -63,23 +73,62 @@ export class ControllerGame {
     const result = this.ChessEngine.makeMove(fromId, toId, side);
     if (!result.success) return result;
 
+    this._clearSelection();
     this._syncViewWithModel();
     this._handlePostMove(side, result.status);
 
     return result;
   }
 
-  botMove() {
-    if (!this.botEnabled || this.currentTurn !== this.botSide) return;
+  scheduleBotMove() {
+    if (
+      !this.botEnabled ||
+      this._isFinished ||
+      this._isBotThinking ||
+      this.currentTurn !== this.botSide
+    ) {
+      return;
+    }
 
-    const move = this.currentBot.getMove(this.ChessEngine, this.botSide);
-    if (!move) return;
+    const botTurnToken = ++this._botTurnToken;
+    this._setBotThinking(true);
+    this._clearSelection();
+    this._deactivateBoardInput();
 
-    const { fromId, toId } = move;
-    this.makeMove(fromId, toId, this.botSide);
+    this._pendingBotTurnId = setTimeout(() => {
+      this._pendingBotTurnId = null;
+
+      if (
+        botTurnToken !== this._botTurnToken ||
+        this._isFinished ||
+        this.currentTurn !== this.botSide
+      ) {
+        return;
+      }
+
+      const move = this.currentBot.getMove(this.ChessEngine, this.botSide);
+      if (move) {
+        const { fromId, toId } = move;
+        this.makeMove(fromId, toId, this.botSide);
+      }
+
+      if (!this._isFinished && botTurnToken === this._botTurnToken) {
+        this._setBotThinking(false);
+      }
+    }, BOT_THINK_DELAY_MS);
+  }
+
+  cancelPendingBotTurn() {
+    this._botTurnToken += 1;
+    if (this._pendingBotTurnId !== null) {
+      clearTimeout(this._pendingBotTurnId);
+      this._pendingBotTurnId = null;
+    }
+    this._setBotThinking(false);
   }
 
   endGame(type, winner) {
+    this.cancelPendingBotTurn();
     this._isFinished = true;
     this._clearSelection();
     this._deactivateBoardInput();
@@ -106,7 +155,7 @@ export class ControllerGame {
   }
 
   _onFigureClick(figure) {
-    if (this._isFinished) return;
+    if (this._isFinished || this._isBotThinking) return;
 
     if (figure.side !== this.currentTurn) {
       if (this.selectedFigure) {
@@ -142,7 +191,7 @@ export class ControllerGame {
   }
 
   _onCellClick(cellView) {
-    if (this._isFinished) return;
+    if (this._isFinished || this._isBotThinking) return;
     if (!this.selectedFigure) return;
 
     const fromId = this.selectedFigure.cellView.id;
@@ -155,7 +204,7 @@ export class ControllerGame {
     }
 
     if (this.botEnabled && this.currentTurn === this.botSide) {
-      this.botMove();
+      this.scheduleBotMove();
     }
   }
 
@@ -216,6 +265,13 @@ export class ControllerGame {
     this.ControllerView.cells.forEach((cellView) => {
       cellView.deactivate();
     });
+  }
+
+  _setBotThinking(isThinking) {
+    if (this._isBotThinking === isThinking) return;
+
+    this._isBotThinking = isThinking;
+    this.onBotThinkingChange(isThinking);
   }
 
   _createBot(botDifficulty) {

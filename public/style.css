@@ -177,6 +177,12 @@ button {
   font-size: 14px;
 }
 
+.thinking-status {
+  color: #d7bd72;
+  font-size: 14px;
+  animation: thinking-pulse 1s ease-in-out infinite;
+}
+
 .end-game-overlay {
   position: absolute;
   z-index: 3;
@@ -240,5 +246,16 @@ button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes thinking-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
   }
 }

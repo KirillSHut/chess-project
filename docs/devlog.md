@@ -112,6 +112,13 @@ Current UI rule:
 - Enabled Hard difficulty by reusing `MinimaxBot` at depth 3.
 - Kept Medium on depth 2 and avoided duplicating minimax logic in a separate bot class.
 
+### Async Bot Turns
+
+- Scheduled bot turns instead of calculating immediately inside the human click flow.
+- Added cancellable thinking-state callbacks from controller to React.
+- Locked board interaction while the bot is thinking.
+- Added visible `Bot is thinking...` UI in the game toolbar.
+
 ### Move Ordering
 
 - Added deterministic move ordering for minimax candidates.

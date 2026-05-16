@@ -6,11 +6,13 @@ import { EndGameOverlay } from './EndGameOverlay.jsx';
 export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
   const pixiRootRef = useRef(null);
   const [gameResult, setGameResult] = useState(null);
+  const [isBotThinking, setIsBotThinking] = useState(false);
   const [sessionId, setSessionId] = useState(0);
 
   useEffect(() => {
     const pixiRoot = pixiRootRef.current;
     const app = new Application();
+    let game = null;
     let isMounted = true;
     let isPixiReady = false;
 
@@ -35,11 +37,12 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
 
       pixiRoot.appendChild(app.canvas);
 
-      const game = new Game(app, {
+      game = new Game(app, {
         botDifficulty: difficulty,
         playerSide,
         botSide,
         onGameEnd: setGameResult,
+        onBotThinkingChange: setIsBotThinking,
       });
 
       await game.loadAssets();
@@ -58,6 +61,8 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
 
     return () => {
       isMounted = false;
+      game?.dispose();
+      setIsBotThinking(false);
       window.removeEventListener('resize', resize);
       if (isPixiReady) {
         app.destroy(true);
@@ -67,6 +72,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
 
   const restartGame = () => {
     setGameResult(null);
+    setIsBotThinking(false);
     setSessionId((currentSessionId) => currentSessionId + 1);
   };
 
@@ -79,6 +85,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
           Menu
         </button>
         <span className="game-mode">Bot: {difficultyLabel}</span>
+        {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
       </div>
       <div className="pixi-stage" ref={pixiRootRef} />
       {gameResult && (

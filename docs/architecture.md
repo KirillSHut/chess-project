@@ -82,6 +82,7 @@ Owns:
 - Human move handling
 - View synchronization after engine moves
 - Random bot move orchestration
+- Async bot turn scheduling and thinking-state callbacks
 - Generic end-game result creation and callback dispatch
 
 This is the integration layer. It is allowed to know about both `ChessEngine` and `ControllerView`, but it should not absorb unrelated systems.
@@ -200,6 +201,16 @@ Disallowed dependencies:
 
 The neutral result shape is deliberate: multiplayer players, local players, and spectators can all consume the same result without changing engine logic.
 
+## Bot Turn Flow
+
+1. `ControllerGame` switches to the bot side after the human move.
+2. The controller schedules the bot turn, marks `isBotThinking`, and disables board input.
+3. `Game` forwards thinking-state changes to `GameScreen`.
+4. React displays `Bot is thinking...` while the bot computes.
+5. The controller applies the returned move through normal move flow, then clears thinking state.
+
+Pending scheduled bot turns are cancellable so restart, menu navigation, or game end cannot apply a stale AI move to a destroyed session.
+
 ## Simulation Flow
 
 1. AI code asks the engine for legal moves.
@@ -215,6 +226,7 @@ Clones preserve board pieces, `hasMoved` flags, the last move for en passant, pr
 - `evaluateBoard` uses material, modest piece-square bonuses, low-weight mobility, and simple king safety. Deeper king safety and endgame-specific tables remain separate future steps.
 - Mobility requires legal move generation for both sides at each evaluation, so it is more expensive than static scoring and may later need caching or disabling for deeper searches.
 - `MinimaxBot` powers both Medium and Hard: depth 2 for Medium, depth 3 for Hard. Hard may visibly block the UI and should be profiled before increasing depth further.
+- Bot turns are scheduled asynchronously, but the current minimax calculation still runs on the main thread once it starts. A worker or remote AI can later replace that calculation behind the same thinking-state boundary.
 - Move ordering currently prefers checkmates, captures, promotions, and checks. It reuses the child simulations needed by search rather than simulating positions twice.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.
 - Restart currently remounts a fresh PixiJS game session from `GameScreen`. This resets engine and view state together without introducing a second reset path inside the engine.

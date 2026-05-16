@@ -85,6 +85,7 @@ It currently owns:
 - Human click handling
 - View synchronization after moves
 - Bot turn orchestration
+- Async bot turn scheduling and thinking-state callbacks
 - Generic end-game result creation and callback dispatch
 
 This class is intentionally the main integration layer. It is acceptable for it to know about both engine and view, but avoid adding unrelated responsibilities such as asset loading, DOM layout, networking, or complex AI search here.
@@ -286,6 +287,7 @@ React components may:
 - Hold simple screen-selection state with `useState`
 - Mount and unmount the PixiJS game through `GameScreen`
 - Present end-game overlays from generic result objects
+- Display bot thinking state reported by the game layer
 
 React components must not:
 
@@ -351,6 +353,7 @@ Rules for current bot work:
 - Keep minimax depth low until profiling shows the UI can support deeper search.
 - Use difficulty configuration instead of duplicating minimax logic: Medium uses depth 2, Hard uses depth 3.
 - Keep move ordering lightweight and reuse simulated child positions already needed by search.
+- Keep bot decision modules UI-agnostic; thinking state belongs to orchestration layers.
 
 If adding stronger AI later:
 
