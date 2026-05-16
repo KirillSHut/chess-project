@@ -53,6 +53,7 @@ Owns:
 - Check, checkmate, and stalemate detection
 - Castling, en passant, and promotion state
 - Simulated moves for king-safety validation
+- Public clone and simulation helpers for future AI search
 
 Must not own:
 
@@ -62,6 +63,12 @@ Must not own:
 - Rendering details
 - Bot strategy
 - Networking concerns
+
+Simulation API:
+
+- `clone()` returns an isolated engine with copied board, move history, and active-side state.
+- `applyMove(move, side, options)` accepts move data and routes through normal validation.
+- `simulateMove(move, side, options)` applies a move to a clone and returns `{ engine, result }`.
 
 ### Game Controller
 
@@ -83,6 +90,8 @@ This is the integration layer. It is allowed to know about both `ChessEngine` an
 
 `src/ai/RandomBot.js`
 `src/ai/GreedyBot.js`
+`src/ai/constants/pieceValues.js`
+`src/ai/evaluators/evaluateBoard.js`
 `src/ai/utils/getLegalMoves.js`
 
 Owns:
@@ -90,6 +99,7 @@ Owns:
 - Gathering legal moves from `ChessEngine`
 - Random move selection for `RandomBot`
 - Simple capture-value selection for `GreedyBot`
+- Deterministic material scoring for future search bots
 - Returning simple move data
 
 Must not own:
@@ -185,11 +195,22 @@ Disallowed dependencies:
 
 The neutral result shape is deliberate: multiplayer players, local players, and spectators can all consume the same result without changing engine logic.
 
+## Simulation Flow
+
+1. AI code asks the engine for legal moves.
+2. AI code can call `engine.clone()` and `clonedEngine.applyMove(move)`, or use `engine.simulateMove(move)`.
+3. Every applied hypothetical move still passes through `ChessEngine.makeMove()`.
+4. The original active game engine remains unchanged.
+
+Clones preserve board pieces, `hasMoved` flags, the last move for en passant, promotion outcomes represented on pieces, and `activeSide`. This is enough state for recursive evaluation while keeping rule ownership inside the engine.
+
 ## Known Tradeoffs
 
 - `RandomBot` and `GreedyBot` are small dedicated modules. Future bots can reuse the same `getMove(engine, side)` shape before the project needs a larger AI abstraction.
+- `evaluateBoard` uses material only. Positional tables, mobility, and search should remain separate future steps.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.
 - Restart currently remounts a fresh PixiJS game session from `GameScreen`. This resets engine and view state together without introducing a second reset path inside the engine.
+- Cloning allocates a fresh 64-cell engine snapshot. That is clear and safe for the current project, though deeper search may eventually need profiling before optimization.
 - `ChessEngine.cells` exposes mutable objects. Treat them as read-only outside the engine until there is a concrete reason to introduce snapshots.
 - `ChessEngine.getAvailableMoves` currently accepts a view-shaped object with `cellView`. A future incremental cleanup should prefer simple model inputs such as `fromId` and `side`.
 - The view rebuilds all figures after every move. This is simple and stable now, but may need incremental updates when animations or performance become important.

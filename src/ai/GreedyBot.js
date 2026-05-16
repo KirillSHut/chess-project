@@ -1,14 +1,6 @@
 import { eChessFigure } from '../enums/eChessFigure.js';
+import { PIECE_VALUES } from './constants/pieceValues.js';
 import { getLegalMoves } from './utils/getLegalMoves.js';
-
-const pieceValues = {
-  [eChessFigure.PAWN]: 1,
-  [eChessFigure.KNIGHT]: 3,
-  [eChessFigure.BISHOP]: 3,
-  [eChessFigure.ROOK]: 5,
-  [eChessFigure.QUEEN]: 9,
-  [eChessFigure.KING]: 1000,
-};
 
 export class GreedyBot {
   getMove(chessEngine, side) {
@@ -23,7 +15,7 @@ export class GreedyBot {
 
     legalMoves.forEach((move) => {
       const capturedFigure = this._getCapturedFigure(chessEngine, move);
-      const captureValue = capturedFigure ? pieceValues[capturedFigure.name] || 0 : 0;
+      const captureValue = capturedFigure ? PIECE_VALUES[capturedFigure.name] || 0 : 0;
 
       if (captureValue === 0) return;
 

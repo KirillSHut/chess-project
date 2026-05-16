@@ -63,3 +63,16 @@ Current UI rule:
 - Added a tiny shared legal-move helper for AI modules.
 - Kept material scoring simple: prefer the highest-value legal capture, otherwise choose a random legal move.
 - Left Medium and Hard disabled while keeping the bot API compatible with future search-based bots.
+
+### Engine Simulation API
+
+- Promoted engine cloning into a public `clone()` API for AI search.
+- Added `applyMove()` for move-object callers and `simulateMove()` for one-step isolated exploration.
+- Added engine-owned `activeSide` state so cloned positions know whose turn comes next.
+- Deep-copied last-move figure data so clone mutation does not leak back into the live engine.
+
+### Board Evaluation
+
+- Added reusable `PIECE_VALUES` constants using centipawn-style material values.
+- Added deterministic `evaluateBoard(chessEngine, side)` material scoring.
+- Reused the shared piece values in `GreedyBot` so capture ranking and future search evaluation stay aligned.

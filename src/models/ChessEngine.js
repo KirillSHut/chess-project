@@ -22,6 +22,12 @@ export class ChessEngine {
      */
     this._lastMove = null;
 
+    /**
+     * Side to move next. Controllers may still own turn flow, but the engine
+     * keeps this so cloned positions are fully useful for AI search.
+     */
+    this._activeSide = 'white';
+
     this._init();
   }
 
@@ -108,7 +114,7 @@ export class ChessEngine {
 
     // Filter out moves that would leave own king in check
     const legalTargets = pseudoLegalTargets.filter((targetCell) => {
-      const simulation = this._clone();
+      const simulation = this.clone();
       simulation._applyMoveInternal(fromCell.id, targetCell.id, { isSimulation: true });
       return !simulation.isInCheck(side);
     });
@@ -152,6 +158,7 @@ export class ChessEngine {
     });
 
     const opponentSide = side === 'white' ? 'black' : 'white';
+    this._activeSide = opponentSide;
     const inCheck = this.isInCheck(opponentSide);
     const opponentHasMoves = this._sideHasAnyLegalMove(opponentSide);
 
@@ -185,12 +192,57 @@ export class ChessEngine {
   }
 
   /**
+   * Create a fully isolated copy of the current engine state.
+   */
+  clone() {
+    const clone = new ChessEngine();
+    clone._cells = this._cells.map((cell) => ({
+      ...cell,
+      figure: cell.figure ? { ...cell.figure } : null,
+    }));
+    clone._lastMove = this._lastMove
+      ? {
+          ...this._lastMove,
+          figure: this._lastMove.figure ? { ...this._lastMove.figure } : null,
+        }
+      : null;
+    clone._activeSide = this._activeSide;
+    return clone;
+  }
+
+  /**
+   * Apply a move object through normal engine validation.
+   * Useful for callers that already represent moves as data objects.
+   */
+  applyMove({ fromId, toId }, side = this._activeSide, options = {}) {
+    return this.makeMove(fromId, toId, side, options);
+  }
+
+  /**
+   * Apply a legal move to a clone and return both the isolated engine and result.
+   * The original engine is never mutated.
+   */
+  simulateMove(move, side = this._activeSide, options = {}) {
+    const simulation = this.clone();
+    const result = simulation.applyMove(move, side, options);
+
+    return {
+      engine: result.success ? simulation : null,
+      result,
+    };
+  }
+
+  /**
    * UTILITY API
    * ----------
    */
 
   get cells() {
     return this._cells;
+  }
+
+  get activeSide() {
+    return this._activeSide;
   }
 
   getCellById(id) {
@@ -559,15 +611,5 @@ export class ChessEngine {
       movingFigure,
       capturedFigure,
     };
-  }
-
-  _clone() {
-    const clone = new ChessEngine();
-    clone._cells = this._cells.map((cell) => ({
-      ...cell,
-      figure: cell.figure ? { ...cell.figure } : null,
-    }));
-    clone._lastMove = this._lastMove ? { ...this._lastMove } : null;
-    return clone;
   }
 }

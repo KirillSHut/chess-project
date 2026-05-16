@@ -59,10 +59,17 @@ It currently handles:
 - En passant
 - Basic pawn promotion, defaulting to queen
 - Cloned simulations for king-safety validation
+- Public clone and simulation helpers for future AI search
 
 The engine must remain independent from PixiJS, DOM APIs, controller classes, and rendering details.
 
 The engine currently uses mutable internal cell objects. Preserve this decision for incremental work, but avoid leaking extra mutable state or allowing view objects to become part of engine state.
+
+Public engine simulation APIs:
+
+- `clone()` returns an isolated functional engine copy.
+- `applyMove(move, side, options)` applies move data through normal validation.
+- `simulateMove(move, side, options)` applies a move to a clone and returns the isolated result.
 
 ## Game Controller: `ControllerGame`
 
@@ -169,6 +176,7 @@ These are acceptable for the current project size, but they are the areas to imp
 
 - Full figure rebuilds are acceptable temporarily, but future animation systems should move toward incremental synchronization.
 - Current bots are intentionally small; future bots should follow the same engine-focused boundary without creating a large AI framework early.
+- Material evaluation currently lives in reusable AI helpers so future search bots do not duplicate scoring rules.
 - Engine cells are mutable and exposed through the `cells` getter. External code should treat them as read-only snapshots even though they are real objects today.
 - There are no automated tests yet for critical chess rules.
 - There is no dedicated move history or notation layer.
@@ -215,6 +223,7 @@ Engine code must:
 - Validate moves
 - Apply moves
 - Track rule-specific state such as `hasMoved` and `_lastMove`
+- Preserve `activeSide` and move-related state across clones
 - Detect check, checkmate, and stalemate
 - Stay independent from PixiJS, DOM, controller, and asset code
 
@@ -326,6 +335,7 @@ The current AI modules are:
 
 - `RandomBot`: chooses any legal move at random.
 - `GreedyBot`: chooses the highest-value legal capture when available, otherwise falls back to a random legal move.
+- `evaluateBoard`: scores material balance from a requested side's perspective.
 
 Rules for current bot work:
 
@@ -333,6 +343,7 @@ Rules for current bot work:
 - Never generate pseudo-legal bot moves manually.
 - Never let the bot directly mutate engine cells or Pixi objects.
 - Keep each bot focused on its intended level; do not mix search logic into simple bots.
+- Reuse shared AI constants such as `PIECE_VALUES` instead of duplicating material tables.
 
 If adding stronger AI later:
 
@@ -353,6 +364,7 @@ Rules:
 - Do not store Pixi objects in engine cells.
 - Do not let view state become authoritative.
 - Prefer cloning or simulation helpers for move validation that needs hypothetical board states.
+- Prefer `clone()`, `applyMove()`, and `simulateMove()` for AI exploration rather than building fake board states outside the engine.
 
 Avoid broad immutability rewrites unless they solve a concrete bug or testing need.
 
