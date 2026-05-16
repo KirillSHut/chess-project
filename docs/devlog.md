@@ -83,6 +83,18 @@ Current UI rule:
 - Mirrored white-oriented tables for black evaluation so positions remain symmetric.
 - Kept material dominant while giving `MinimaxBot` a basic preference for healthier piece placement.
 
+### Mobility Evaluation
+
+- Added low-weight mobility scoring based on legal move counts for both sides.
+- Kept the mobility term small so activity helps break ties without overpowering material.
+- Calculated legal moves only once per side per evaluation.
+
+### King Safety Evaluation
+
+- Added lightweight king-safety scoring from check status and adjacent friendly pieces.
+- Rewarded local shelter around the king without introducing attack maps or pawn-structure analysis.
+- Kept the heuristic small so direct material remains the dominant signal.
+
 ### Minimax Bot
 
 - Added deterministic depth-2 `MinimaxBot` as the playable Medium difficulty.
