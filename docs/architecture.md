@@ -29,6 +29,7 @@ Owns:
 - Multiplayer placeholder screen
 - Simple screen navigation state
 - Mounting and unmounting the PixiJS game canvas
+- End-game overlay presentation
 
 Must not own:
 
@@ -73,7 +74,7 @@ Owns:
 - Human move handling
 - View synchronization after engine moves
 - Random bot move orchestration
-- End-game callback dispatch
+- Generic end-game result creation and callback dispatch
 
 This is the integration layer. It is allowed to know about both `ChessEngine` and `ControllerView`, but it should not absorb unrelated systems.
 
@@ -150,10 +151,23 @@ Disallowed dependencies:
 - View code generating chess rules
 - Bot logic directly mutating view objects or engine internals
 
+## End-Game Flow
+
+1. `ChessEngine.makeMove()` returns `checkmate` or `stalemate` from existing rule logic.
+2. `ControllerGame` converts that terminal status into a neutral result object:
+   - checkmate: `{ type, winner, loser, isDraw: false }`
+   - stalemate: `{ type, winner: null, loser: null, isDraw: true }`
+3. `Game` forwards the result to the active application shell.
+4. `GameScreen` stores the result in React state and renders `EndGameOverlay`.
+5. The overlay translates the neutral result into viewer-facing copy such as `You Win`, `You Lose`, or `Draw`.
+
+The neutral result shape is deliberate: multiplayer players, local players, and spectators can all consume the same result without changing engine logic.
+
 ## Known Tradeoffs
 
 - `ControllerGame` currently contains random bot selection. This is fine for one bot level, but should be extracted when bot behavior grows.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.
+- Restart currently remounts a fresh PixiJS game session from `GameScreen`. This resets engine and view state together without introducing a second reset path inside the engine.
 - `ChessEngine.cells` exposes mutable objects. Treat them as read-only outside the engine until there is a concrete reason to introduce snapshots.
 - `ChessEngine.getAvailableMoves` currently accepts a view-shaped object with `cellView`. A future incremental cleanup should prefer simple model inputs such as `fromId` and `side`.
 - The view rebuilds all figures after every move. This is simple and stable now, but may need incremental updates when animations or performance become important.

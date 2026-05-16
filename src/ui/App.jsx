@@ -10,6 +10,11 @@ const screens = {
   GAME: 'game',
 };
 
+const localBotGame = {
+  playerSide: 'white',
+  botSide: 'black',
+};
+
 export function App() {
   const [screen, setScreen] = useState(screens.MAIN);
   const [difficulty, setDifficulty] = useState(null);
@@ -20,7 +25,14 @@ export function App() {
   };
 
   if (screen === screens.GAME) {
-    return <GameScreen difficulty={difficulty} onBackToMenu={() => setScreen(screens.MAIN)} />;
+    return (
+      <GameScreen
+        difficulty={difficulty}
+        playerSide={localBotGame.playerSide}
+        botSide={localBotGame.botSide}
+        onBackToMenu={() => setScreen(screens.MAIN)}
+      />
+    );
   }
 
   return (

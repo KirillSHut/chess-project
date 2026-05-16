@@ -3,10 +3,23 @@ import { assetsConfig } from './configs/assetsConfig.js';
 import { ControllerGame } from './controllers/game/ControllerGame.js';
 
 export class Game {
-  constructor(app, { botDifficulty = 'random' } = {}) {
+  constructor(
+    app,
+    {
+      botDifficulty = 'random',
+      playerSide = 'white',
+      botSide = 'black',
+      botEnabled = true,
+      onGameEnd = () => {},
+    } = {},
+  ) {
     this.app = app;
     this.stage = app.stage;
     this.botDifficulty = botDifficulty;
+    this.playerSide = playerSide;
+    this.botSide = botSide;
+    this.botEnabled = botEnabled;
+    this.onGameEnd = onGameEnd;
 
     this._isStarted = false;
     this._isFinished = false;
@@ -14,14 +27,14 @@ export class Game {
 
   init() {
     this.ControllerGame = new ControllerGame(this.stage, {
-      playerSide: 'white',
-      botSide: 'black',
-      botEnabled: true,
+      playerSide: this.playerSide,
+      botSide: this.botSide,
+      botEnabled: this.botEnabled,
     });
 
     this.ControllerGame.init();
-    this.ControllerGame.onGameEnd = ({ status, winnerSide }) => {
-      this.endGame(status, winnerSide);
+    this.ControllerGame.onGameEnd = (result) => {
+      this.endGame(result);
     };
 
     this.startGame();
@@ -57,11 +70,9 @@ export class Game {
     this.ControllerGame.botMove();
   }
 
-  endGame(status, winnerSide) {
+  endGame(result) {
     if (this._isFinished) return;
     this._isFinished = true;
-
-    // For now we just log; UI/online sync can hook into this later.
-    console.log('Game ended:', { status, winnerSide });
+    this.onGameEnd(result);
   }
 }

@@ -41,3 +41,11 @@ Current UI rule:
 - React owns screen navigation and menu presentation.
 - `GameScreen` is the bridge that mounts PixiJS.
 - The existing MVC chess implementation remains responsible for gameplay.
+
+### End-Game Flow
+
+- Added generic terminal result objects from `ControllerGame`.
+- Added a React end-game overlay with Restart Game and Back To Menu actions.
+- Froze board input after terminal states so a finished position cannot continue receiving moves.
+- Kept result presentation in React while leaving checkmate and stalemate detection in `ChessEngine`.
+- Restart now creates a fresh local game session so engine and view state reset together.

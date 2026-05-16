@@ -77,7 +77,7 @@ It currently owns:
 - Human click handling
 - View synchronization after moves
 - Random bot move selection
-- End-game callback dispatch
+- Generic end-game result creation and callback dispatch
 
 This class is intentionally the main integration layer. It is acceptable for it to know about both engine and view, but avoid adding unrelated responsibilities such as asset loading, DOM layout, networking, or complex AI search here.
 
@@ -119,6 +119,7 @@ It currently handles:
 - Bot difficulty menu
 - Multiplayer placeholder
 - Mounting the PixiJS game screen after choosing Random bot difficulty
+- Displaying the end-game overlay from controller-emitted result data
 
 React must stay an application shell. Do not move chess rules, board rendering, or MVC game flow into React components.
 
@@ -275,6 +276,7 @@ React components may:
 - Render menus, buttons, and placeholder screens
 - Hold simple screen-selection state with `useState`
 - Mount and unmount the PixiJS game through `GameScreen`
+- Present end-game overlays from generic result objects
 
 React components must not:
 
@@ -283,6 +285,19 @@ React components must not:
 - Own engine state
 - Import `ChessEngine` directly for gameplay decisions
 - Add complex routing or global state libraries for simple menu flow
+
+End-game UI should consume neutral result data such as:
+
+```js
+{
+  type: 'checkmate',
+  winner: 'white',
+  loser: 'black',
+  isDraw: false,
+}
+```
+
+React may translate that into local-player copy such as `You Win`, but the result object itself must not be bot-specific.
 
 ## Component Rules
 

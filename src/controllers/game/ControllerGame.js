@@ -16,6 +16,7 @@ export class ControllerGame {
     this.currentTurn = 'white';
     this.selectedFigure = null;
     this.activeMoveCells = [];
+    this._isFinished = false;
 
     this.onGameEnd = () => {};
   }
@@ -36,6 +37,7 @@ export class ControllerGame {
 
   startGame() {
     this.currentTurn = 'white';
+    this._isFinished = false;
     this._clearSelection();
   }
 
@@ -44,6 +46,7 @@ export class ControllerGame {
    * Used both by human player (via clicks) and bot.
    */
   makeMove(fromId, toId, side) {
+    if (this._isFinished) return { success: false, reason: 'game_finished' };
     if (side !== this.currentTurn) return { success: false, reason: 'not_your_turn' };
 
     if (!this.ChessEngine.isMoveLegal(fromId, toId, side)) {
@@ -74,9 +77,13 @@ export class ControllerGame {
     this.makeMove(fromId, toId, this.botSide);
   }
 
-  endGame(status, winnerSide) {
+  endGame(type, winner) {
+    this._isFinished = true;
+    this._clearSelection();
+    this._deactivateBoardInput();
+
     if (typeof this.onGameEnd === 'function') {
-      this.onGameEnd({ status, winnerSide });
+      this.onGameEnd(this._createGameResult(type, winner));
     }
   }
 
@@ -97,6 +104,8 @@ export class ControllerGame {
   }
 
   _onFigureClick(figure) {
+    if (this._isFinished) return;
+
     if (figure.side !== this.currentTurn) {
       if (this.selectedFigure) {
         this._onCellClick(figure.cellView);
@@ -131,6 +140,7 @@ export class ControllerGame {
   }
 
   _onCellClick(cellView) {
+    if (this._isFinished) return;
     if (!this.selectedFigure) return;
 
     const fromId = this.selectedFigure.cellView.id;
@@ -177,6 +187,33 @@ export class ControllerGame {
 
     this.currentTurn = opponentSide;
     this._clearSelection();
+  }
+
+  _createGameResult(type, winner) {
+    if (type === 'stalemate') {
+      return {
+        type,
+        winner: null,
+        loser: null,
+        isDraw: true,
+      };
+    }
+
+    return {
+      type,
+      winner,
+      loser: winner === null ? null : winner === 'white' ? 'black' : 'white',
+      isDraw: false,
+    };
+  }
+
+  _deactivateBoardInput() {
+    this.ControllerView.figures.forEach((figure) => {
+      figure.deactivate();
+    });
+    this.ControllerView.cells.forEach((cellView) => {
+      cellView.deactivate();
+    });
   }
 
   _getAllLegalMovesForSide(side) {

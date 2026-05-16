@@ -1,9 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
 import { Game } from '../Game.js';
+import { EndGameOverlay } from './EndGameOverlay.jsx';
 
-export function GameScreen({ difficulty, onBackToMenu }) {
+export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
   const pixiRootRef = useRef(null);
+  const [gameResult, setGameResult] = useState(null);
+  const [sessionId, setSessionId] = useState(0);
 
   useEffect(() => {
     const pixiRoot = pixiRootRef.current;
@@ -34,6 +37,9 @@ export function GameScreen({ difficulty, onBackToMenu }) {
 
       const game = new Game(app, {
         botDifficulty: difficulty,
+        playerSide,
+        botSide,
+        onGameEnd: setGameResult,
       });
 
       await game.loadAssets();
@@ -57,7 +63,12 @@ export function GameScreen({ difficulty, onBackToMenu }) {
         app.destroy(true);
       }
     };
-  }, [difficulty]);
+  }, [botSide, difficulty, playerSide, sessionId]);
+
+  const restartGame = () => {
+    setGameResult(null);
+    setSessionId((currentSessionId) => currentSessionId + 1);
+  };
 
   return (
     <main className="game-screen">
@@ -68,6 +79,14 @@ export function GameScreen({ difficulty, onBackToMenu }) {
         <span className="game-mode">Bot: {difficulty}</span>
       </div>
       <div className="pixi-stage" ref={pixiRootRef} />
+      {gameResult && (
+        <EndGameOverlay
+          result={gameResult}
+          viewerSide={playerSide}
+          onRestart={restartGame}
+          onBackToMenu={onBackToMenu}
+        />
+      )}
     </main>
   );
 }
