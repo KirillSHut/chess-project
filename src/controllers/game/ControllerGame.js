@@ -1,3 +1,4 @@
+import { GreedyBot } from '../../ai/GreedyBot.js';
 import { RandomBot } from '../../ai/RandomBot.js';
 import { ChessEngine } from '../../models/ChessEngine.js';
 import { ControllerView } from '../../view/ControllerView.js';
@@ -7,13 +8,16 @@ import { ControllerView } from '../../view/ControllerView.js';
  * It also owns the turn system and simple bot integration for now.
  */
 export class ControllerGame {
-  constructor(stage, { playerSide = 'white', botSide = 'black', botEnabled = true } = {}) {
+  constructor(
+    stage,
+    { playerSide = 'white', botSide = 'black', botEnabled = true, botDifficulty = 'random' } = {},
+  ) {
     this.stage = stage;
 
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
-    this.currentBot = new RandomBot();
+    this.currentBot = this._createBot(botDifficulty);
 
     this.currentTurn = 'white';
     this.selectedFigure = null;
@@ -211,5 +215,13 @@ export class ControllerGame {
     this.ControllerView.cells.forEach((cellView) => {
       cellView.deactivate();
     });
+  }
+
+  _createBot(botDifficulty) {
+    if (botDifficulty === 'easy') {
+      return new GreedyBot();
+    }
+
+    return new RandomBot();
   }
 }

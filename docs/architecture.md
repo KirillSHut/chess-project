@@ -9,7 +9,7 @@ This project is a local browser chess game built with JavaScript ES modules, Rea
 3. `src/ui/GameScreen.jsx` creates the PixiJS application when a playable mode is selected.
 4. `src/Game.js` loads assets and owns the top-level chess game lifecycle.
 5. `src/controllers/game/ControllerGame.js` creates and coordinates the model and view.
-6. `src/ai/RandomBot.js` chooses random legal bot moves from engine-generated moves.
+6. `src/ai` chooses bot moves from engine-generated legal moves.
 7. `src/models/ChessEngine.js` stores board state and validates chess rules.
 8. `src/view/ControllerView.js` renders board cells and pieces with PixiJS.
 9. Pixi components emit pointer callbacks back into the controller.
@@ -82,11 +82,14 @@ This is the integration layer. It is allowed to know about both `ChessEngine` an
 ### AI
 
 `src/ai/RandomBot.js`
+`src/ai/GreedyBot.js`
+`src/ai/utils/getLegalMoves.js`
 
 Owns:
 
 - Gathering legal moves from `ChessEngine`
-- Random move selection
+- Random move selection for `RandomBot`
+- Simple capture-value selection for `GreedyBot`
 - Returning simple move data
 
 Must not own:
@@ -156,7 +159,7 @@ Allowed dependencies:
 - React menu components import other UI components
 - `GameScreen` imports PixiJS `Application` and `Game`
 - `Game` imports `ControllerGame`
-- `ControllerGame` imports `RandomBot`
+- `ControllerGame` imports the currently supported bot modules
 - `ControllerGame` imports `ChessEngine` and `ControllerView`
 - `ControllerView` imports Pixi components and static board config
 - Pixi components import PixiJS
@@ -184,7 +187,7 @@ The neutral result shape is deliberate: multiplayer players, local players, and 
 
 ## Known Tradeoffs
 
-- `RandomBot` is a small dedicated module. Future bots can reuse the same `getMove(engine, side)` shape before the project needs a larger AI abstraction.
+- `RandomBot` and `GreedyBot` are small dedicated modules. Future bots can reuse the same `getMove(engine, side)` shape before the project needs a larger AI abstraction.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.
 - Restart currently remounts a fresh PixiJS game session from `GameScreen`. This resets engine and view state together without introducing a second reset path inside the engine.
 - `ChessEngine.cells` exposes mutable objects. Treat them as read-only outside the engine until there is a concrete reason to introduce snapshots.

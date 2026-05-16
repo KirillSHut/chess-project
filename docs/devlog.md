@@ -56,3 +56,10 @@ Current UI rule:
 - Kept `ControllerGame` responsible for bot turn orchestration and move application only.
 - Kept bot decisions engine-focused through `getMove(chessEngine, side)`.
 - Preserved the existing legal-move behavior while making future bot swapping simpler.
+
+### Greedy Bot
+
+- Added `GreedyBot` as the playable Easy difficulty.
+- Added a tiny shared legal-move helper for AI modules.
+- Kept material scoring simple: prefer the highest-value legal capture, otherwise choose a random legal move.
+- Left Medium and Hard disabled while keeping the bot API compatible with future search-based bots.

@@ -19,8 +19,8 @@ export function App() {
   const [screen, setScreen] = useState(screens.MAIN);
   const [difficulty, setDifficulty] = useState(null);
 
-  const startRandomBotGame = () => {
-    setDifficulty('random');
+  const startBotGame = (selectedDifficulty) => {
+    setDifficulty(selectedDifficulty);
     setScreen(screens.GAME);
   };
 
@@ -47,7 +47,7 @@ export function App() {
       {screen === screens.BOT_DIFFICULTY && (
         <BotDifficultyMenu
           onBack={() => setScreen(screens.MAIN)}
-          onSelectRandom={startRandomBotGame}
+          onSelectDifficulty={startBotGame}
         />
       )}
 

@@ -17,19 +17,19 @@ The current implementation contains:
 - `ChessEngine` as the model and chess-rule source of truth
 - React application shell in `src/ui`
 - MVC-style coordination through `ControllerGame`
-- Dedicated random bot logic in `src/ai/RandomBot.js`
+- Dedicated bot logic in `src/ai`
 - PixiJS board and piece rendering through `ControllerView`
 - `CellContainer` and `BaseFigure` Pixi components
 - Turn management
 - Full playable local game flow
-- A random-move AI bot integrated through a dedicated AI module
+- Random and greedy AI bots integrated through dedicated AI modules
 
 The project does not currently contain:
 
 - TypeScript
 - Server-side logic
 - WebSocket / Socket.IO multiplayer
-- Dedicated AI modules beyond random move selection
+- AI modules beyond current random and greedy move selection
 - A separate state-management library
 
 Keep future changes aligned with the real implementation. Do not document or build idealized systems unless the task explicitly asks for them.
@@ -119,7 +119,7 @@ It currently handles:
 - Main menu
 - Bot difficulty menu
 - Multiplayer placeholder
-- Mounting the PixiJS game screen after choosing Random bot difficulty
+- Mounting the PixiJS game screen after choosing a playable bot difficulty
 - Displaying the end-game overlay from controller-emitted result data
 
 React must stay an application shell. Do not move chess rules, board rendering, or MVC game flow into React components.
@@ -146,7 +146,7 @@ Keep bootstrap files focused on application setup and top-level lifecycle. Keep 
 - Move validation and move application are centralized in `ChessEngine`.
 - The controller is the integration point between engine and Pixi view.
 - The view is mostly rendering-focused and rebuilds itself from engine state.
-- The random bot uses legal engine moves instead of inventing move rules.
+- The bots use legal engine moves instead of inventing move rules.
 - The project already has a playable game loop with turn changes and end-game handling.
 - Special chess rules such as castling, en passant, checkmate, stalemate, and promotion are represented in the engine.
 
@@ -168,7 +168,7 @@ These are acceptable for the current project size, but they are the areas to imp
 ## Scaling Risks
 
 - Full figure rebuilds are acceptable temporarily, but future animation systems should move toward incremental synchronization.
-- `RandomBot` is intentionally small; future bots should follow the same engine-focused boundary without creating a large AI framework early.
+- Current bots are intentionally small; future bots should follow the same engine-focused boundary without creating a large AI framework early.
 - Engine cells are mutable and exposed through the `cells` getter. External code should treat them as read-only snapshots even though they are real objects today.
 - There are no automated tests yet for critical chess rules.
 - There is no dedicated move history or notation layer.
@@ -249,7 +249,7 @@ Avoid adding:
 - Networking logic
 - Complex AI search algorithms
 
-Bot decision-making belongs in dedicated AI modules such as `RandomBot`, which receive engine state and return a move.
+Bot decision-making belongs in dedicated AI modules such as `RandomBot` and `GreedyBot`, which receive engine state and return a move.
 
 ## View Rules
 
@@ -322,14 +322,17 @@ They must not:
 
 # AI Bot Rules
 
-The current AI is a random legal-move bot implemented in `src/ai/RandomBot.js`.
+The current AI modules are:
+
+- `RandomBot`: chooses any legal move at random.
+- `GreedyBot`: chooses the highest-value legal capture when available, otherwise falls back to a random legal move.
 
 Rules for current bot work:
 
 - Use `ChessEngine.getAvailableMoves` or another engine-owned legal move API.
 - Never generate pseudo-legal bot moves manually.
 - Never let the bot directly mutate engine cells or Pixi objects.
-- Keep random selection simple unless the task asks for stronger AI.
+- Keep each bot focused on its intended level; do not mix search logic into simple bots.
 
 If adding stronger AI later:
 

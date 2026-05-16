@@ -30,6 +30,7 @@ export class Game {
       playerSide: this.playerSide,
       botSide: this.botSide,
       botEnabled: this.botEnabled,
+      botDifficulty: this.botDifficulty,
     });
 
     this.ControllerGame.init();

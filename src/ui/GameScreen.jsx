@@ -70,13 +70,15 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
     setSessionId((currentSessionId) => currentSessionId + 1);
   };
 
+  const difficultyLabel = `${difficulty[0].toUpperCase()}${difficulty.slice(1)}`;
+
   return (
     <main className="game-screen">
       <div className="game-toolbar">
         <button className="menu-button menu-button-compact" type="button" onClick={onBackToMenu}>
           Menu
         </button>
-        <span className="game-mode">Bot: {difficulty}</span>
+        <span className="game-mode">Bot: {difficultyLabel}</span>
       </div>
       <div className="pixi-stage" ref={pixiRootRef} />
       {gameResult && (
