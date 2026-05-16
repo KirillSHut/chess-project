@@ -4,7 +4,7 @@ import { Game } from '../Game.js';
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
-export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
+export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) {
   const pixiRootRef = useRef(null);
   const [gameResult, setGameResult] = useState(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
@@ -40,9 +40,9 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
       pixiRoot.appendChild(app.canvas);
 
       game = new Game(app, {
-        botDifficulty: difficulty,
+        mode,
+        botDifficulties,
         playerSide,
-        botSide,
         onGameEnd: setGameResult,
         onBotThinkingChange: setIsBotThinking,
         onBotMoveMetrics: setLastBotMoveMetrics,
@@ -72,7 +72,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
         app.destroy(true);
       }
     };
-  }, [botSide, difficulty, playerSide, sessionId]);
+  }, [botDifficulties, mode, playerSide, sessionId]);
 
   const restartGame = () => {
     setGameResult(null);
@@ -81,7 +81,10 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
     setSessionId((currentSessionId) => currentSessionId + 1);
   };
 
-  const difficultyLabel = `${difficulty[0].toUpperCase()}${difficulty.slice(1)}`;
+  const modeLabel =
+    mode === 'ai-vs-ai'
+      ? `White: ${formatDifficulty(botDifficulties.white)} / Black: ${formatDifficulty(botDifficulties.black)}`
+      : `Bot: ${formatDifficulty(botDifficulties.black)}`;
 
   return (
     <main className="game-screen">
@@ -89,7 +92,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
         <button className="menu-button menu-button-compact" type="button" onClick={onBackToMenu}>
           Menu
         </button>
-        <span className="game-mode">Bot: {difficultyLabel}</span>
+        <span className="game-mode">{modeLabel}</span>
         {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
       </div>
       <AiMetricsPanel metrics={lastBotMoveMetrics} />
@@ -104,4 +107,8 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
       )}
     </main>
   );
+}
+
+function formatDifficulty(difficulty) {
+  return `${difficulty[0].toUpperCase()}${difficulty.slice(1)}`;
 }

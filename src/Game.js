@@ -6,7 +6,9 @@ export class Game {
   constructor(
     app,
     {
+      mode = 'human-vs-bot',
       botDifficulty = 'random',
+      botDifficulties = null,
       playerSide = 'white',
       botSide = 'black',
       botEnabled = true,
@@ -17,7 +19,9 @@ export class Game {
   ) {
     this.app = app;
     this.stage = app.stage;
+    this.mode = mode;
     this.botDifficulty = botDifficulty;
+    this.botDifficulties = botDifficulties;
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
@@ -31,10 +35,12 @@ export class Game {
 
   init() {
     this.ControllerGame = new ControllerGame(this.stage, {
+      mode: this.mode,
       playerSide: this.playerSide,
       botSide: this.botSide,
       botEnabled: this.botEnabled,
       botDifficulty: this.botDifficulty,
+      botDifficulties: this.botDifficulties,
     });
 
     this.ControllerGame.init();

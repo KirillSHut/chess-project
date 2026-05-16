@@ -4,7 +4,8 @@ import { RandomBot } from '../../ai/RandomBot.js';
 import { ChessEngine } from '../../models/ChessEngine.js';
 import { ControllerView } from '../../view/ControllerView.js';
 
-const BOT_THINK_DELAY_MS = 100;
+const BOT_THINK_DELAY_MS = 300;
+const MAX_AI_VS_AI_HALF_MOVES = 200;
 
 /**
  * ControllerGame coordinates the ChessEngine (pure logic) and ControllerView (Pixi rendering).
@@ -13,15 +14,34 @@ const BOT_THINK_DELAY_MS = 100;
 export class ControllerGame {
   constructor(
     stage,
-    { playerSide = 'white', botSide = 'black', botEnabled = true, botDifficulty = 'random' } = {},
+    {
+      mode = 'human-vs-bot',
+      playerSide = 'white',
+      botSide = 'black',
+      botEnabled = true,
+      botDifficulty = 'random',
+      botDifficulties = null,
+    } = {},
   ) {
     this.stage = stage;
 
+    this.mode = mode;
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
-    this.botDifficulty = botDifficulty;
-    this.currentBot = this._createBot(botDifficulty);
+    this.botDifficulties =
+      botDifficulties ||
+      (botEnabled
+        ? {
+            [botSide]: botDifficulty,
+          }
+        : {});
+    this.bots = Object.fromEntries(
+      Object.entries(this.botDifficulties).map(([side, difficulty]) => [
+        side,
+        this._createBot(difficulty),
+      ]),
+    );
 
     this.currentTurn = 'white';
     this.selectedFigure = null;
@@ -32,6 +52,7 @@ export class ControllerGame {
     this._pendingBotTurnId = null;
     this.botMoveMetrics = [];
     this.lastBotMoveMetrics = null;
+    this.halfMoveCount = 0;
 
     this.onGameEnd = () => {};
     this.onBotThinkingChange = () => {};
@@ -58,7 +79,13 @@ export class ControllerGame {
     this._isFinished = false;
     this.botMoveMetrics = [];
     this.lastBotMoveMetrics = null;
+    this.halfMoveCount = 0;
     this._clearSelection();
+
+    if (this.mode === 'ai-vs-ai') {
+      this._deactivateBoardInput();
+      this.scheduleBotMove();
+    }
   }
 
   /**
@@ -67,7 +94,7 @@ export class ControllerGame {
    */
   makeMove(fromId, toId, side) {
     if (this._isFinished) return { success: false, reason: 'game_finished' };
-    if (this._isBotThinking && side !== this.botSide) {
+    if (this._isBotThinking && !this._isBotSide(side)) {
       return { success: false, reason: 'bot_thinking' };
     }
     if (side !== this.currentTurn) return { success: false, reason: 'not_your_turn' };
@@ -87,12 +114,9 @@ export class ControllerGame {
   }
 
   scheduleBotMove() {
-    if (
-      !this.botEnabled ||
-      this._isFinished ||
-      this._isBotThinking ||
-      this.currentTurn !== this.botSide
-    ) {
+    const activeBot = this._getBotForSide(this.currentTurn);
+
+    if (!this.botEnabled || this._isFinished || this._isBotThinking || !activeBot) {
       return;
     }
 
@@ -107,23 +131,31 @@ export class ControllerGame {
       if (
         botTurnToken !== this._botTurnToken ||
         this._isFinished ||
-        this.currentTurn !== this.botSide
+        !this._getBotForSide(this.currentTurn)
       ) {
         return;
       }
 
+      const activeSide = this.currentTurn;
+      const currentBot = this._getBotForSide(activeSide);
       const calculationStartTime = this._getTimeMs();
-      const move = this.currentBot.getMove(this.ChessEngine, this.botSide);
+      const move = currentBot.getMove(this.ChessEngine, activeSide);
       const calculationTimeMs = this._getTimeMs() - calculationStartTime;
-      this._recordBotMoveMetrics(move, calculationTimeMs);
+      this._recordBotMoveMetrics(move, calculationTimeMs, activeSide, currentBot);
 
       if (move) {
         const { fromId, toId } = move;
-        this.makeMove(fromId, toId, this.botSide);
+        this.makeMove(fromId, toId, activeSide);
+      } else {
+        this._finishNoMovePosition(activeSide);
       }
 
       if (!this._isFinished && botTurnToken === this._botTurnToken) {
         this._setBotThinking(false);
+
+        if (this._isBotSide(this.currentTurn)) {
+          this.scheduleBotMove();
+        }
       }
     }, BOT_THINK_DELAY_MS);
   }
@@ -165,7 +197,7 @@ export class ControllerGame {
   }
 
   _onFigureClick(figure) {
-    if (this._isFinished || this._isBotThinking) return;
+    if (this._isFinished || this._isBotThinking || !this._isHumanTurn()) return;
 
     if (figure.side !== this.currentTurn) {
       if (this.selectedFigure) {
@@ -201,7 +233,7 @@ export class ControllerGame {
   }
 
   _onCellClick(cellView) {
-    if (this._isFinished || this._isBotThinking) return;
+    if (this._isFinished || this._isBotThinking || !this._isHumanTurn()) return;
     if (!this.selectedFigure) return;
 
     const fromId = this.selectedFigure.cellView.id;
@@ -213,7 +245,7 @@ export class ControllerGame {
       return;
     }
 
-    if (this.botEnabled && this.currentTurn === this.botSide) {
+    if (this._isBotSide(this.currentTurn)) {
       this.scheduleBotMove();
     }
   }
@@ -246,12 +278,18 @@ export class ControllerGame {
       return;
     }
 
+    this.halfMoveCount += 1;
+    if (this.mode === 'ai-vs-ai' && this.halfMoveCount >= MAX_AI_VS_AI_HALF_MOVES) {
+      this.endGame('move-limit', null);
+      return;
+    }
+
     this.currentTurn = opponentSide;
     this._clearSelection();
   }
 
   _createGameResult(type, winner) {
-    if (type === 'stalemate') {
+    if (type === 'stalemate' || winner === null) {
       return {
         type,
         winner: null,
@@ -291,13 +329,12 @@ export class ControllerGame {
     }));
   }
 
-  _recordBotMoveMetrics(move, calculationTimeMs) {
-    const searchMetrics =
-      typeof this.currentBot.getLastMetrics === 'function' ? this.currentBot.getLastMetrics() : {};
+  _recordBotMoveMetrics(move, calculationTimeMs, side, bot) {
+    const searchMetrics = typeof bot.getLastMetrics === 'function' ? bot.getLastMetrics() : {};
 
     const metrics = {
-      difficulty: this.botDifficulty,
-      side: this.botSide,
+      difficulty: this.botDifficulties[side],
+      side,
       calculationTimeMs,
       selectedMove: move ? { ...move } : null,
       searchDepth: searchMetrics.depth ?? null,
@@ -311,6 +348,27 @@ export class ControllerGame {
 
   _getTimeMs() {
     return globalThis.performance?.now ? globalThis.performance.now() : Date.now();
+  }
+
+  _finishNoMovePosition(side) {
+    if (this.ChessEngine.isInCheck(side)) {
+      this.endGame('checkmate', side === 'white' ? 'black' : 'white');
+      return;
+    }
+
+    this.endGame('stalemate', null);
+  }
+
+  _getBotForSide(side) {
+    return this.bots[side] || null;
+  }
+
+  _isBotSide(side) {
+    return Boolean(this._getBotForSide(side));
+  }
+
+  _isHumanTurn() {
+    return this.mode !== 'ai-vs-ai' && this.currentTurn === this.playerSide;
   }
 
   _createBot(botDifficulty) {

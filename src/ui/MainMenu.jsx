@@ -1,4 +1,4 @@
-export function MainMenu({ onPlayVsBot, onMultiplayer }) {
+export function MainMenu({ onPlayVsBot, onAiVsAi, onMultiplayer }) {
   return (
     <section className="menu-panel" aria-labelledby="main-menu-title">
       <p className="menu-kicker">Chess Project</p>
@@ -10,6 +10,9 @@ export function MainMenu({ onPlayVsBot, onMultiplayer }) {
       <div className="menu-actions">
         <button className="menu-button menu-button-primary" type="button" onClick={onPlayVsBot}>
           Play vs Bot
+        </button>
+        <button className="menu-button" type="button" onClick={onAiVsAi}>
+          AI vs AI
         </button>
         <button className="menu-button menu-button-secondary" type="button" onClick={onMultiplayer}>
           Multiplayer
