@@ -10,9 +10,9 @@ export class Game {
       playerSide = 'white',
       botSide = 'black',
       botEnabled = true,
-      onGameEnd = () => { },
-      onBotThinkingChange = () => { },
-      onBotMoveMetrics = () => { },
+      onGameEnd = () => {},
+      onBotThinkingChange = () => {},
+      onBotMoveMetrics = () => {},
     } = {},
   ) {
     this.app = app;

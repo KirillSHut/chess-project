@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
 import { Game } from '../Game.js';
+import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
 export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
   const pixiRootRef = useRef(null);
   const [gameResult, setGameResult] = useState(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
+  const [lastBotMoveMetrics, setLastBotMoveMetrics] = useState(null);
   const [sessionId, setSessionId] = useState(0);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
         botSide,
         onGameEnd: setGameResult,
         onBotThinkingChange: setIsBotThinking,
+        onBotMoveMetrics: setLastBotMoveMetrics,
       });
 
       await game.loadAssets();
@@ -63,6 +66,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
       isMounted = false;
       game?.dispose();
       setIsBotThinking(false);
+      setLastBotMoveMetrics(null);
       window.removeEventListener('resize', resize);
       if (isPixiReady) {
         app.destroy(true);
@@ -73,6 +77,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
   const restartGame = () => {
     setGameResult(null);
     setIsBotThinking(false);
+    setLastBotMoveMetrics(null);
     setSessionId((currentSessionId) => currentSessionId + 1);
   };
 
@@ -87,6 +92,7 @@ export function GameScreen({ difficulty, playerSide, botSide, onBackToMenu }) {
         <span className="game-mode">Bot: {difficultyLabel}</span>
         {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
       </div>
+      <AiMetricsPanel metrics={lastBotMoveMetrics} />
       <div className="pixi-stage" ref={pixiRootRef} />
       {gameResult && (
         <EndGameOverlay

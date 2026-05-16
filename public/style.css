@@ -183,6 +183,53 @@ button {
   animation: thinking-pulse 1s ease-in-out infinite;
 }
 
+.ai-metrics-panel {
+  position: fixed;
+  z-index: 2;
+  top: 20px;
+  right: 20px;
+  width: 248px;
+  padding: 16px;
+  border: 1px solid rgba(239, 232, 210, 0.12);
+  border-radius: 8px;
+  background: rgba(14, 15, 13, 0.76);
+  backdrop-filter: blur(12px);
+}
+
+.ai-metrics-title {
+  margin: 0 0 12px;
+  color: #d7bd72;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ai-metrics-list {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.ai-metrics-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  color: rgba(239, 232, 210, 0.72);
+  font-size: 13px;
+}
+
+.ai-metrics-row dt,
+.ai-metrics-row dd {
+  margin: 0;
+}
+
+.ai-metrics-row dd {
+  color: #f6edd9;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .end-game-overlay {
   position: absolute;
   z-index: 3;
