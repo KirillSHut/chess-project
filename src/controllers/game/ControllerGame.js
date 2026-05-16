@@ -20,6 +20,7 @@ export class ControllerGame {
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
+    this.botDifficulty = botDifficulty;
     this.currentBot = this._createBot(botDifficulty);
 
     this.currentTurn = 'white';
@@ -29,9 +30,12 @@ export class ControllerGame {
     this._isBotThinking = false;
     this._botTurnToken = 0;
     this._pendingBotTurnId = null;
+    this.botMoveMetrics = [];
+    this.lastBotMoveMetrics = null;
 
     this.onGameEnd = () => {};
     this.onBotThinkingChange = () => {};
+    this.onBotMoveMetrics = () => {};
   }
 
   init() {
@@ -52,6 +56,8 @@ export class ControllerGame {
     this.cancelPendingBotTurn();
     this.currentTurn = 'white';
     this._isFinished = false;
+    this.botMoveMetrics = [];
+    this.lastBotMoveMetrics = null;
     this._clearSelection();
   }
 
@@ -106,7 +112,11 @@ export class ControllerGame {
         return;
       }
 
+      const calculationStartTime = this._getTimeMs();
       const move = this.currentBot.getMove(this.ChessEngine, this.botSide);
+      const calculationTimeMs = this._getTimeMs() - calculationStartTime;
+      this._recordBotMoveMetrics(move, calculationTimeMs);
+
       if (move) {
         const { fromId, toId } = move;
         this.makeMove(fromId, toId, this.botSide);
@@ -272,6 +282,35 @@ export class ControllerGame {
 
     this._isBotThinking = isThinking;
     this.onBotThinkingChange(isThinking);
+  }
+
+  getBotMoveMetrics() {
+    return this.botMoveMetrics.map((metrics) => ({
+      ...metrics,
+      selectedMove: metrics.selectedMove ? { ...metrics.selectedMove } : null,
+    }));
+  }
+
+  _recordBotMoveMetrics(move, calculationTimeMs) {
+    const searchMetrics =
+      typeof this.currentBot.getLastMetrics === 'function' ? this.currentBot.getLastMetrics() : {};
+
+    const metrics = {
+      difficulty: this.botDifficulty,
+      side: this.botSide,
+      calculationTimeMs,
+      selectedMove: move ? { ...move } : null,
+      searchDepth: searchMetrics.depth ?? null,
+      ...searchMetrics,
+    };
+
+    this.lastBotMoveMetrics = metrics;
+    this.botMoveMetrics.push(metrics);
+    this.onBotMoveMetrics(metrics);
+  }
+
+  _getTimeMs() {
+    return globalThis.performance?.now ? globalThis.performance.now() : Date.now();
   }
 
   _createBot(botDifficulty) {

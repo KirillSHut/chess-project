@@ -9,9 +9,11 @@ const CHECKMATE_SCORE = 1000000;
 export class MinimaxBot {
   constructor(depth = DEFAULT_DEPTH) {
     this.depth = depth;
+    this._lastMetrics = this._createMetrics();
   }
 
   getMove(chessEngine, side) {
+    this._lastMetrics = this._createMetrics();
     const legalMoves = getLegalMoves(chessEngine, side);
 
     if (legalMoves.length === 0) {
@@ -35,6 +37,8 @@ export class MinimaxBot {
   }
 
   _minimax(chessEngine, depth, maximizingSide, alpha, beta) {
+    this._lastMetrics.nodesVisited += 1;
+
     const currentSide = chessEngine.activeSide;
     const legalMoves = getLegalMoves(chessEngine, currentSide);
 
@@ -47,6 +51,7 @@ export class MinimaxBot {
     }
 
     if (depth === 0) {
+      this._lastMetrics.evaluations += 1;
       return evaluateBoard(chessEngine, maximizingSide);
     }
 
@@ -54,7 +59,8 @@ export class MinimaxBot {
     let bestScore = isMaximizingTurn ? -Infinity : Infinity;
 
     const orderedMoves = orderMoves(legalMoves, chessEngine, currentSide);
-    for (const { simulation } of orderedMoves) {
+    for (let index = 0; index < orderedMoves.length; index += 1) {
+      const { simulation } = orderedMoves[index];
       const score = this._minimax(simulation, depth - 1, maximizingSide, alpha, beta);
 
       if (isMaximizingTurn) {
@@ -66,10 +72,24 @@ export class MinimaxBot {
       }
 
       if (beta <= alpha) {
+        this._lastMetrics.prunedBranches += orderedMoves.length - index - 1;
         break;
       }
     }
 
     return bestScore;
+  }
+
+  getLastMetrics() {
+    return { ...this._lastMetrics };
+  }
+
+  _createMetrics() {
+    return {
+      nodesVisited: 0,
+      evaluations: 0,
+      prunedBranches: 0,
+      depth: this.depth,
+    };
   }
 }

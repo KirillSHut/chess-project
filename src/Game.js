@@ -10,8 +10,9 @@ export class Game {
       playerSide = 'white',
       botSide = 'black',
       botEnabled = true,
-      onGameEnd = () => {},
-      onBotThinkingChange = () => {},
+      onGameEnd = () => { },
+      onBotThinkingChange = () => { },
+      onBotMoveMetrics = () => { },
     } = {},
   ) {
     this.app = app;
@@ -22,6 +23,7 @@ export class Game {
     this.botEnabled = botEnabled;
     this.onGameEnd = onGameEnd;
     this.onBotThinkingChange = onBotThinkingChange;
+    this.onBotMoveMetrics = onBotMoveMetrics;
 
     this._isStarted = false;
     this._isFinished = false;
@@ -40,6 +42,7 @@ export class Game {
       this.endGame(result);
     };
     this.ControllerGame.onBotThinkingChange = this.onBotThinkingChange;
+    this.ControllerGame.onBotMoveMetrics = this.onBotMoveMetrics;
 
     this.startGame();
   }
@@ -72,6 +75,10 @@ export class Game {
   botMove() {
     if (this._isFinished) return;
     this.ControllerGame.scheduleBotMove();
+  }
+
+  getBotMoveMetrics() {
+    return this.ControllerGame.getBotMoveMetrics();
   }
 
   endGame(result) {
