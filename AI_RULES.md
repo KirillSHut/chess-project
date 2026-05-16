@@ -349,6 +349,7 @@ Rules for current bot work:
 - Keep mobility low-weight because legal-move counting is useful but more expensive than static scoring.
 - Keep king safety lightweight: simple check status and nearby friendly pieces only.
 - Keep minimax depth low until profiling shows the UI can support deeper search.
+- Use difficulty configuration instead of duplicating minimax logic: Medium uses depth 2, Hard uses depth 3.
 - Keep move ordering lightweight and reuse simulated child positions already needed by search.
 
 If adding stronger AI later:

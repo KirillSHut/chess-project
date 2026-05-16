@@ -224,7 +224,11 @@ export class ControllerGame {
     }
 
     if (botDifficulty === 'medium') {
-      return new MinimaxBot();
+      return new MinimaxBot(2);
+    }
+
+    if (botDifficulty === 'hard') {
+      return new MinimaxBot(3);
     }
 
     return new RandomBot();

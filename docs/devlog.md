@@ -107,6 +107,11 @@ Current UI rule:
 - Added alpha-beta bounds to `MinimaxBot` without changing its public API.
 - Preserved the same evaluation and first-best tie behavior while skipping branches that cannot improve the current result.
 
+### Hard Difficulty
+
+- Enabled Hard difficulty by reusing `MinimaxBot` at depth 3.
+- Kept Medium on depth 2 and avoided duplicating minimax logic in a separate bot class.
+
 ### Move Ordering
 
 - Added deterministic move ordering for minimax candidates.
