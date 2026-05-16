@@ -335,7 +335,7 @@ The current AI modules are:
 
 - `RandomBot`: chooses any legal move at random.
 - `GreedyBot`: chooses the highest-value legal capture when available, otherwise falls back to a random legal move.
-- `MinimaxBot`: searches future legal moves with shallow deterministic minimax.
+- `MinimaxBot`: searches future legal moves with shallow deterministic minimax plus alpha-beta pruning.
 - `evaluateBoard`: scores material balance from a requested side's perspective.
 
 Rules for current bot work:
@@ -346,6 +346,7 @@ Rules for current bot work:
 - Keep each bot focused on its intended level; do not mix search logic into simple bots.
 - Reuse shared AI constants such as `PIECE_VALUES` instead of duplicating material tables.
 - Keep minimax depth low until profiling shows the UI can support deeper search.
+- Keep move ordering lightweight and reuse simulated child positions already needed by search.
 
 If adding stronger AI later:
 

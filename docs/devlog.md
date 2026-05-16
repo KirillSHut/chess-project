@@ -83,3 +83,14 @@ Current UI rule:
 - Reused engine simulation plus material evaluation for recursive search.
 - Added minimal terminal scoring for checkmate and stalemate positions.
 - Kept Hard disabled and left alpha-beta pruning for a later step.
+
+### Alpha-Beta Pruning
+
+- Added alpha-beta bounds to `MinimaxBot` without changing its public API.
+- Preserved the same evaluation and first-best tie behavior while skipping branches that cannot improve the current result.
+
+### Move Ordering
+
+- Added deterministic move ordering for minimax candidates.
+- Prioritized checkmates, material captures, promotions, and checks.
+- Reused child simulations during search so ordering does not simulate each move twice.

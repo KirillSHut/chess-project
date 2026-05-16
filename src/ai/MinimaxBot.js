@@ -1,5 +1,6 @@
 import { evaluateBoard } from './evaluators/evaluateBoard.js';
 import { getLegalMoves } from './utils/getLegalMoves.js';
+import { orderMoves } from './utils/orderMoves.js';
 
 export const DEFAULT_DEPTH = 2;
 
@@ -20,11 +21,10 @@ export class MinimaxBot {
     let bestMove = legalMoves[0];
     let bestScore = -Infinity;
 
-    legalMoves.forEach((move) => {
-      const { engine: simulation } = chessEngine.simulateMove(move, side);
-      if (!simulation) return;
+    const orderedMoves = orderMoves(legalMoves, chessEngine, side);
 
-      const score = this._minimax(simulation, this.depth - 1, side);
+    orderedMoves.forEach(({ move, simulation }) => {
+      const score = this._minimax(simulation, this.depth - 1, side, -Infinity, Infinity);
       if (score > bestScore) {
         bestScore = score;
         bestMove = move;
@@ -34,7 +34,7 @@ export class MinimaxBot {
     return bestMove;
   }
 
-  _minimax(chessEngine, depth, maximizingSide) {
+  _minimax(chessEngine, depth, maximizingSide, alpha, beta) {
     const currentSide = chessEngine.activeSide;
     const legalMoves = getLegalMoves(chessEngine, currentSide);
 
@@ -53,13 +53,22 @@ export class MinimaxBot {
     const isMaximizingTurn = currentSide === maximizingSide;
     let bestScore = isMaximizingTurn ? -Infinity : Infinity;
 
-    legalMoves.forEach((move) => {
-      const { engine: simulation } = chessEngine.simulateMove(move, currentSide);
-      if (!simulation) return;
+    const orderedMoves = orderMoves(legalMoves, chessEngine, currentSide);
+    for (const { simulation } of orderedMoves) {
+      const score = this._minimax(simulation, depth - 1, maximizingSide, alpha, beta);
 
-      const score = this._minimax(simulation, depth - 1, maximizingSide);
-      bestScore = isMaximizingTurn ? Math.max(bestScore, score) : Math.min(bestScore, score);
-    });
+      if (isMaximizingTurn) {
+        bestScore = Math.max(bestScore, score);
+        alpha = Math.max(alpha, bestScore);
+      } else {
+        bestScore = Math.min(bestScore, score);
+        beta = Math.min(beta, bestScore);
+      }
+
+      if (beta <= alpha) {
+        break;
+      }
+    }
 
     return bestScore;
   }
