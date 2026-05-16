@@ -92,6 +92,7 @@ This is the integration layer. It is allowed to know about both `ChessEngine` an
 `src/ai/GreedyBot.js`
 `src/ai/MinimaxBot.js`
 `src/ai/constants/pieceValues.js`
+`src/ai/constants/pieceSquareTables.js`
 `src/ai/evaluators/evaluateBoard.js`
 `src/ai/utils/getLegalMoves.js`
 `src/ai/utils/orderMoves.js`
@@ -103,7 +104,7 @@ Owns:
 - Simple capture-value selection for `GreedyBot`
 - Shallow future-move search with alpha-beta pruning for `MinimaxBot`
 - Lightweight candidate ordering for alpha-beta search
-- Deterministic material scoring for future search bots
+- Deterministic material plus piece-square scoring for future search bots
 - Returning simple move data
 
 Must not own:
@@ -211,7 +212,7 @@ Clones preserve board pieces, `hasMoved` flags, the last move for en passant, pr
 ## Known Tradeoffs
 
 - `RandomBot`, `GreedyBot`, and `MinimaxBot` are dedicated modules with the same `getMove(engine, side)` shape.
-- `evaluateBoard` uses material only. Positional tables, mobility, and search should remain separate future steps.
+- `evaluateBoard` uses material plus modest piece-square bonuses. Mobility, deeper king safety, and endgame-specific tables remain separate future steps.
 - `MinimaxBot` stays at depth 2 for now and uses alpha-beta pruning. Deeper synchronous search may still visibly block the UI and should be profiled before increasing depth.
 - Move ordering currently prefers checkmates, captures, promotions, and checks. It reuses the child simulations needed by search rather than simulating positions twice.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.

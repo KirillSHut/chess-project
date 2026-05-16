@@ -77,6 +77,12 @@ Current UI rule:
 - Added deterministic `evaluateBoard(chessEngine, side)` material scoring.
 - Reused the shared piece values in `GreedyBot` so capture ranking and future search evaluation stay aligned.
 
+### Piece-Square Tables
+
+- Added modest piece-square bonuses for every piece type.
+- Mirrored white-oriented tables for black evaluation so positions remain symmetric.
+- Kept material dominant while giving `MinimaxBot` a basic preference for healthier piece placement.
+
 ### Minimax Bot
 
 - Added deterministic depth-2 `MinimaxBot` as the playable Medium difficulty.
