@@ -76,3 +76,10 @@ Current UI rule:
 - Added reusable `PIECE_VALUES` constants using centipawn-style material values.
 - Added deterministic `evaluateBoard(chessEngine, side)` material scoring.
 - Reused the shared piece values in `GreedyBot` so capture ranking and future search evaluation stay aligned.
+
+### Minimax Bot
+
+- Added deterministic depth-2 `MinimaxBot` as the playable Medium difficulty.
+- Reused engine simulation plus material evaluation for recursive search.
+- Added minimal terminal scoring for checkmate and stalemate positions.
+- Kept Hard disabled and left alpha-beta pruning for a later step.

@@ -1,4 +1,5 @@
 import { GreedyBot } from '../../ai/GreedyBot.js';
+import { MinimaxBot } from '../../ai/MinimaxBot.js';
 import { RandomBot } from '../../ai/RandomBot.js';
 import { ChessEngine } from '../../models/ChessEngine.js';
 import { ControllerView } from '../../view/ControllerView.js';
@@ -220,6 +221,10 @@ export class ControllerGame {
   _createBot(botDifficulty) {
     if (botDifficulty === 'easy') {
       return new GreedyBot();
+    }
+
+    if (botDifficulty === 'medium') {
+      return new MinimaxBot();
     }
 
     return new RandomBot();

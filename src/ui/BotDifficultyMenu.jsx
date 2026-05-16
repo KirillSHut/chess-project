@@ -1,7 +1,7 @@
 const difficulties = [
   { label: 'Random', value: 'random', available: true },
   { label: 'Easy', value: 'easy', available: true },
-  { label: 'Medium', value: 'medium', available: false },
+  { label: 'Medium', value: 'medium', available: true },
   { label: 'Hard', value: 'hard', available: false },
 ];
 
@@ -10,7 +10,9 @@ export function BotDifficultyMenu({ onBack, onSelectDifficulty }) {
     <section className="menu-panel" aria-labelledby="difficulty-title">
       <p className="menu-kicker">Play vs Bot</p>
       <h1 id="difficulty-title">Select difficulty</h1>
-      <p className="menu-copy">Random and Easy are available in the current implementation.</p>
+      <p className="menu-copy">
+        Random, Easy, and Medium are available in the current implementation.
+      </p>
 
       <div className="difficulty-list" aria-label="Bot difficulty">
         {difficulties.map((difficulty) => (

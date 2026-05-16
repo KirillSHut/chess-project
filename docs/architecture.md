@@ -90,6 +90,7 @@ This is the integration layer. It is allowed to know about both `ChessEngine` an
 
 `src/ai/RandomBot.js`
 `src/ai/GreedyBot.js`
+`src/ai/MinimaxBot.js`
 `src/ai/constants/pieceValues.js`
 `src/ai/evaluators/evaluateBoard.js`
 `src/ai/utils/getLegalMoves.js`
@@ -99,6 +100,7 @@ Owns:
 - Gathering legal moves from `ChessEngine`
 - Random move selection for `RandomBot`
 - Simple capture-value selection for `GreedyBot`
+- Shallow future-move search for `MinimaxBot`
 - Deterministic material scoring for future search bots
 - Returning simple move data
 
@@ -206,8 +208,9 @@ Clones preserve board pieces, `hasMoved` flags, the last move for en passant, pr
 
 ## Known Tradeoffs
 
-- `RandomBot` and `GreedyBot` are small dedicated modules. Future bots can reuse the same `getMove(engine, side)` shape before the project needs a larger AI abstraction.
+- `RandomBot`, `GreedyBot`, and `MinimaxBot` are dedicated modules with the same `getMove(engine, side)` shape.
 - `evaluateBoard` uses material only. Positional tables, mobility, and search should remain separate future steps.
+- `MinimaxBot` stays at depth 2 for now. Deeper synchronous search may visibly block the UI and should be profiled before increasing depth.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.
 - Restart currently remounts a fresh PixiJS game session from `GameScreen`. This resets engine and view state together without introducing a second reset path inside the engine.
 - Cloning allocates a fresh 64-cell engine snapshot. That is clear and safe for the current project, though deeper search may eventually need profiling before optimization.

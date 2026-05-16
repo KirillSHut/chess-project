@@ -22,14 +22,14 @@ The current implementation contains:
 - `CellContainer` and `BaseFigure` Pixi components
 - Turn management
 - Full playable local game flow
-- Random and greedy AI bots integrated through dedicated AI modules
+- Random, greedy, and minimax AI bots integrated through dedicated AI modules
 
 The project does not currently contain:
 
 - TypeScript
 - Server-side logic
 - WebSocket / Socket.IO multiplayer
-- AI modules beyond current random and greedy move selection
+- AI modules beyond current random, greedy, and minimax move selection
 - A separate state-management library
 
 Keep future changes aligned with the real implementation. Do not document or build idealized systems unless the task explicitly asks for them.
@@ -258,7 +258,7 @@ Avoid adding:
 - Networking logic
 - Complex AI search algorithms
 
-Bot decision-making belongs in dedicated AI modules such as `RandomBot` and `GreedyBot`, which receive engine state and return a move.
+Bot decision-making belongs in dedicated AI modules such as `RandomBot`, `GreedyBot`, and `MinimaxBot`, which receive engine state and return a move.
 
 ## View Rules
 
@@ -335,6 +335,7 @@ The current AI modules are:
 
 - `RandomBot`: chooses any legal move at random.
 - `GreedyBot`: chooses the highest-value legal capture when available, otherwise falls back to a random legal move.
+- `MinimaxBot`: searches future legal moves with shallow deterministic minimax.
 - `evaluateBoard`: scores material balance from a requested side's perspective.
 
 Rules for current bot work:
@@ -344,6 +345,7 @@ Rules for current bot work:
 - Never let the bot directly mutate engine cells or Pixi objects.
 - Keep each bot focused on its intended level; do not mix search logic into simple bots.
 - Reuse shared AI constants such as `PIECE_VALUES` instead of duplicating material tables.
+- Keep minimax depth low until profiling shows the UI can support deeper search.
 
 If adding stronger AI later:
 
