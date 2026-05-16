@@ -1,3 +1,4 @@
+import { RandomBot } from '../../ai/RandomBot.js';
 import { ChessEngine } from '../../models/ChessEngine.js';
 import { ControllerView } from '../../view/ControllerView.js';
 
@@ -12,6 +13,7 @@ export class ControllerGame {
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
+    this.currentBot = new RandomBot();
 
     this.currentTurn = 'white';
     this.selectedFigure = null;
@@ -62,18 +64,13 @@ export class ControllerGame {
     return result;
   }
 
-  /**
-   * Simple bot that picks a random legal move.
-   */
   botMove() {
     if (!this.botEnabled || this.currentTurn !== this.botSide) return;
 
-    const allMoves = this._getAllLegalMovesForSide(this.botSide);
-    if (allMoves.length === 0) return;
+    const move = this.currentBot.getMove(this.ChessEngine, this.botSide);
+    if (!move) return;
 
-    const randomIndex = Math.floor(Math.random() * allMoves.length);
-    const { fromId, toId } = allMoves[randomIndex];
-
+    const { fromId, toId } = move;
     this.makeMove(fromId, toId, this.botSide);
   }
 
@@ -214,31 +211,5 @@ export class ControllerGame {
     this.ControllerView.cells.forEach((cellView) => {
       cellView.deactivate();
     });
-  }
-
-  _getAllLegalMovesForSide(side) {
-    const moves = [];
-
-    this.ChessEngine.cells.forEach((cell) => {
-      if (!cell.figure || cell.figure.side !== side) return;
-
-      const legalTargets = this.ChessEngine.getAvailableMoves(
-        {
-          figureName: cell.figure.name,
-          side,
-          cellView: { id: cell.id },
-        },
-        side,
-      );
-
-      legalTargets.forEach((target) => {
-        moves.push({
-          fromId: cell.id,
-          toId: target.id,
-        });
-      });
-    });
-
-    return moves;
   }
 }

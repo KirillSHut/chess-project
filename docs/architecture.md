@@ -9,9 +9,10 @@ This project is a local browser chess game built with JavaScript ES modules, Rea
 3. `src/ui/GameScreen.jsx` creates the PixiJS application when a playable mode is selected.
 4. `src/Game.js` loads assets and owns the top-level chess game lifecycle.
 5. `src/controllers/game/ControllerGame.js` creates and coordinates the model and view.
-6. `src/models/ChessEngine.js` stores board state and validates chess rules.
-7. `src/view/ControllerView.js` renders board cells and pieces with PixiJS.
-8. Pixi components emit pointer callbacks back into the controller.
+6. `src/ai/RandomBot.js` chooses random legal bot moves from engine-generated moves.
+7. `src/models/ChessEngine.js` stores board state and validates chess rules.
+8. `src/view/ControllerView.js` renders board cells and pieces with PixiJS.
+9. Pixi components emit pointer callbacks back into the controller.
 
 ## Module Responsibilities
 
@@ -78,6 +79,23 @@ Owns:
 
 This is the integration layer. It is allowed to know about both `ChessEngine` and `ControllerView`, but it should not absorb unrelated systems.
 
+### AI
+
+`src/ai/RandomBot.js`
+
+Owns:
+
+- Gathering legal moves from `ChessEngine`
+- Random move selection
+- Returning simple move data
+
+Must not own:
+
+- Turn advancement
+- Move application
+- PixiJS or React references
+- Direct engine mutation
+
 ### View
 
 `src/view/ControllerView.js`
@@ -138,6 +156,7 @@ Allowed dependencies:
 - React menu components import other UI components
 - `GameScreen` imports PixiJS `Application` and `Game`
 - `Game` imports `ControllerGame`
+- `ControllerGame` imports `RandomBot`
 - `ControllerGame` imports `ChessEngine` and `ControllerView`
 - `ControllerView` imports Pixi components and static board config
 - Pixi components import PixiJS
@@ -165,7 +184,7 @@ The neutral result shape is deliberate: multiplayer players, local players, and 
 
 ## Known Tradeoffs
 
-- `ControllerGame` currently contains random bot selection. This is fine for one bot level, but should be extracted when bot behavior grows.
+- `RandomBot` is a small dedicated module. Future bots can reuse the same `getMove(engine, side)` shape before the project needs a larger AI abstraction.
 - React currently uses local `useState` for screen flow. This is enough for the menu; routing or global state would be unnecessary.
 - Restart currently remounts a fresh PixiJS game session from `GameScreen`. This resets engine and view state together without introducing a second reset path inside the engine.
 - `ChessEngine.cells` exposes mutable objects. Treat them as read-only outside the engine until there is a concrete reason to introduce snapshots.
@@ -176,7 +195,7 @@ The neutral result shape is deliberate: multiplayer players, local players, and 
 
 1. Add focused tests for `ChessEngine`.
 2. Clean the engine public API so it does not mention view concepts.
-3. Extract bot strategy only when adding non-random AI.
+3. Add new bot modules only when introducing non-random AI.
 4. Add visible promotion and game-end UI.
 5. Improve rendering updates when animation or performance requires it.
 6. Add multiplayer only as a separate planned feature.

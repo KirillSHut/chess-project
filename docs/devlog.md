@@ -49,3 +49,10 @@ Current UI rule:
 - Froze board input after terminal states so a finished position cannot continue receiving moves.
 - Kept result presentation in React while leaving checkmate and stalemate detection in `ChessEngine`.
 - Restart now creates a fresh local game session so engine and view state reset together.
+
+### Random Bot Extraction
+
+- Moved random move selection from `ControllerGame` into `src/ai/RandomBot.js`.
+- Kept `ControllerGame` responsible for bot turn orchestration and move application only.
+- Kept bot decisions engine-focused through `getMove(chessEngine, side)`.
+- Preserved the existing legal-move behavior while making future bot swapping simpler.

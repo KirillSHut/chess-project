@@ -17,11 +17,12 @@ The current implementation contains:
 - `ChessEngine` as the model and chess-rule source of truth
 - React application shell in `src/ui`
 - MVC-style coordination through `ControllerGame`
+- Dedicated random bot logic in `src/ai/RandomBot.js`
 - PixiJS board and piece rendering through `ControllerView`
 - `CellContainer` and `BaseFigure` Pixi components
 - Turn management
 - Full playable local game flow
-- A random-move AI bot integrated in the game controller
+- A random-move AI bot integrated through a dedicated AI module
 
 The project does not currently contain:
 
@@ -76,7 +77,7 @@ It currently owns:
 - Highlighted move cells
 - Human click handling
 - View synchronization after moves
-- Random bot move selection
+- Bot turn orchestration
 - Generic end-game result creation and callback dispatch
 
 This class is intentionally the main integration layer. It is acceptable for it to know about both engine and view, but avoid adding unrelated responsibilities such as asset loading, DOM layout, networking, or complex AI search here.
@@ -157,8 +158,7 @@ Preserve these decisions unless a task specifically requires a broader refactor.
 
 ## Mixed Responsibilities
 
-- `ControllerGame` owns both user interaction flow and random AI move selection.
-- `ControllerGame` also handles selection state, legal-move highlighting, turn advancement, and end-game dispatch.
+- `ControllerGame` handles selection state, legal-move highlighting, turn advancement, bot turn orchestration, and end-game dispatch.
 - `ControllerView` creates board cells and figures, stores layout constants, maps model cells to view cells, and manages Pixi containers.
 - `CellContainer` and `BaseFigure` expose click callbacks directly, which couples input handling closely to Pixi display objects.
 - `ChessEngine.getAvailableMoves` accepts an object shaped like a view figure, including `cellView`. This works today, but it leaks view terminology into the engine API.
@@ -168,7 +168,7 @@ These are acceptable for the current project size, but they are the areas to imp
 ## Scaling Risks
 
 - Full figure rebuilds are acceptable temporarily, but future animation systems should move toward incremental synchronization.
-- Random bot logic inside `ControllerGame` will become hard to extend if greedy, minimax, or difficulty levels are added.
+- `RandomBot` is intentionally small; future bots should follow the same engine-focused boundary without creating a large AI framework early.
 - Engine cells are mutable and exposed through the `cells` getter. External code should treat them as read-only snapshots even though they are real objects today.
 - There are no automated tests yet for critical chess rules.
 - There is no dedicated move history or notation layer.
@@ -237,7 +237,7 @@ It may contain:
 - Selection flow
 - Calling engine methods
 - Calling view methods
-- Trigger bot actions, but bot decision logic should live outside the controller once multiple AI levels are introduced.
+- Trigger bot actions while keeping bot decision logic outside the controller.
 - End-game dispatch
 
 Avoid adding:
@@ -249,7 +249,7 @@ Avoid adding:
 - Networking logic
 - Complex AI search algorithms
 
-If bot logic grows beyond random move selection, move it into a small JavaScript module that receives engine state or legal moves and returns a move.
+Bot decision-making belongs in dedicated AI modules such as `RandomBot`, which receive engine state and return a move.
 
 ## View Rules
 
@@ -322,18 +322,18 @@ They must not:
 
 # AI Bot Rules
 
-The current AI is a random legal-move bot implemented inside `ControllerGame`.
+The current AI is a random legal-move bot implemented in `src/ai/RandomBot.js`.
 
 Rules for current bot work:
 
 - Use `ChessEngine.getAvailableMoves` or another engine-owned legal move API.
-- Never generate pseudo-legal bot moves in the controller.
+- Never generate pseudo-legal bot moves manually.
 - Never let the bot directly mutate engine cells or Pixi objects.
 - Keep random selection simple unless the task asks for stronger AI.
 
 If adding stronger AI later:
 
-- Start with a separate JavaScript module.
+- Add a separate JavaScript module with the same `getMove(engine, side)` shape.
 - Pass it legal moves or model data, not Pixi objects.
 - Keep the first extraction small; do not introduce a full AI framework upfront.
 
@@ -400,7 +400,7 @@ Prefer improvements in this order:
 
 1. Add focused tests around `ChessEngine`.
 2. Simplify engine inputs so they do not reference `cellView`.
-3. Extract random bot move choice only when adding more bot behavior.
+3. Add stronger bot modules only when adding more bot behavior.
 4. Improve view synchronization only when animations, performance, or UI features need it.
 5. Add visible game-end and promotion UI when requested.
 6. Add multiplayer only as a separate feature, with a clear server/client design.
