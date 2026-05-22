@@ -550,11 +550,7 @@ export class ChessEngine {
       const direction = movingFigure.side === 'white' ? 1 : -1;
       const capturedCell = this.getCell(toCell.row - direction, toCell.column);
       if (capturedCell && capturedCell.figure && capturedCell.figure.side !== movingFigure.side) {
-        if (!isSimulation) {
-          capturedCell.figure = null;
-        } else {
-          capturedCell.figure = null;
-        }
+        capturedCell.figure = null;
       }
     }
 
