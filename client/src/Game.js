@@ -15,6 +15,7 @@ export class Game {
       onGameEnd = () => {},
       onBotThinkingChange = () => {},
       onBotMoveMetrics = () => {},
+      onMultiplayerMove = () => {},
     } = {},
   ) {
     this.app = app;
@@ -28,6 +29,7 @@ export class Game {
     this.onGameEnd = onGameEnd;
     this.onBotThinkingChange = onBotThinkingChange;
     this.onBotMoveMetrics = onBotMoveMetrics;
+    this.onMultiplayerMove = onMultiplayerMove;
 
     this._isStarted = false;
     this._isFinished = false;
@@ -49,6 +51,7 @@ export class Game {
     };
     this.ControllerGame.onBotThinkingChange = this.onBotThinkingChange;
     this.ControllerGame.onBotMoveMetrics = this.onBotMoveMetrics;
+    this.ControllerGame.onMultiplayerMove = this.onMultiplayerMove;
 
     this.startGame();
   }
@@ -85,6 +88,14 @@ export class Game {
 
   getBotMoveMetrics() {
     return this.ControllerGame.getBotMoveMetrics();
+  }
+
+  applyOpponentMove(move) {
+    if (this._isFinished) {
+      return { success: false, reason: 'game_finished' };
+    }
+
+    return this.ControllerGame.applyOpponentMove(move);
   }
 
   endGame(result) {

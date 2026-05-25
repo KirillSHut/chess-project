@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
 import { Game } from '../Game.js';
-import { disconnectSocket, leaveRoom } from '../services/socketService.js';
+import {
+  disconnectSocket,
+  leaveRoom,
+  sendMove,
+  subscribeToRoomEvents,
+} from '../services/socketService.js';
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
@@ -10,6 +15,7 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
   const [gameResult, setGameResult] = useState(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
   const [lastBotMoveMetrics, setLastBotMoveMetrics] = useState(null);
+  const [multiplayerStatus, setMultiplayerStatus] = useState('Connected');
   const [sessionId, setSessionId] = useState(0);
 
   useEffect(() => {
@@ -18,6 +24,11 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
     let game = null;
     let isMounted = true;
     let isPixiReady = false;
+    let unsubscribeFromRoomEvents = null;
+
+    if (mode === 'multiplayer') {
+      setMultiplayerStatus('Connected');
+    }
 
     const resize = () => {
       const w = window.innerWidth;
@@ -48,6 +59,16 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
         onGameEnd: setGameResult,
         onBotThinkingChange: setIsBotThinking,
         onBotMoveMetrics: setLastBotMoveMetrics,
+        onMultiplayerMove: ({ fromId, toId, promotionTo }) => {
+          if (mode !== 'multiplayer') return;
+
+          sendMove({
+            roomId,
+            fromId,
+            toId,
+            promotionTo,
+          });
+        },
       });
 
       await game.loadAssets();
@@ -58,6 +79,23 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
       }
 
       game.init();
+      if (mode === 'multiplayer') {
+        unsubscribeFromRoomEvents = subscribeToRoomEvents({
+          onOpponentMove: (move) => {
+            const result = game?.applyOpponentMove(move);
+
+            if (result && !result.success) {
+              console.log(`Failed to apply opponent move: ${result.reason}`);
+            }
+          },
+          onRoomError: ({ code, message }) => {
+            setMultiplayerStatus(
+              code === 'opponent_disconnected' ? 'Opponent disconnected' : message || 'Room error',
+            );
+          },
+        });
+      }
+
       window.addEventListener('resize', resize);
       resize();
     };
@@ -67,6 +105,7 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
     return () => {
       isMounted = false;
       game?.dispose();
+      unsubscribeFromRoomEvents?.();
       if (mode === 'multiplayer') {
         leaveRoom();
         disconnectSocket();
@@ -78,12 +117,13 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
         app.destroy(true);
       }
     };
-  }, [botDifficulties, mode, playerSide, sessionId]);
+  }, [botDifficulties, mode, playerSide, roomId, sessionId]);
 
   const restartGame = () => {
     setGameResult(null);
     setIsBotThinking(false);
     setLastBotMoveMetrics(null);
+    setMultiplayerStatus('Connected');
     setSessionId((currentSessionId) => currentSessionId + 1);
   };
 
@@ -101,6 +141,7 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
           Menu
         </button>
         <span className="game-mode">{modeLabel}</span>
+        {mode === 'multiplayer' && <span className="game-mode">{multiplayerStatus}</span>}
         {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
       </div>
       {mode !== 'multiplayer' && <AiMetricsPanel metrics={lastBotMoveMetrics} />}

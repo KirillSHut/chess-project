@@ -32,6 +32,15 @@ export function leaveRoom() {
   getSocket().emit('leave_room');
 }
 
+export function sendMove({ roomId, fromId, toId, promotionTo = null }) {
+  getSocket().emit('make_move', {
+    roomId,
+    fromId,
+    toId,
+    promotionTo,
+  });
+}
+
 export function subscribeToRoomEvents(handlers) {
   const activeSocket = getSocket();
 
@@ -59,6 +68,10 @@ export function subscribeToRoomEvents(handlers) {
     activeSocket.on('game_started', handlers.onGameStarted);
   }
 
+  if (handlers.onOpponentMove) {
+    activeSocket.on('opponent_move', handlers.onOpponentMove);
+  }
+
   return () => {
     if (handlers.onRoomCreated) {
       activeSocket.off('room_created', handlers.onRoomCreated);
@@ -82,6 +95,10 @@ export function subscribeToRoomEvents(handlers) {
 
     if (handlers.onGameStarted) {
       activeSocket.off('game_started', handlers.onGameStarted);
+    }
+
+    if (handlers.onOpponentMove) {
+      activeSocket.off('opponent_move', handlers.onOpponentMove);
     }
   };
 }

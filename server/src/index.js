@@ -103,6 +103,47 @@ io.on('connection', (socket) => {
     leaveCurrentRoom(socket);
   });
 
+  socket.on('make_move', ({ roomId, fromId, toId, promotionTo } = {}) => {
+    const room = roomManager.getRoomById(roomId);
+
+    if (!room) {
+      socket.emit('room_error', {
+        message: 'Room not found',
+      });
+      return;
+    }
+
+    const side = roomManager.getSideForSocket(room, socket.id);
+    if (!side) {
+      socket.emit('room_error', {
+        message: 'Sender is not in this room',
+      });
+      return;
+    }
+
+    if (typeof fromId !== 'string' || typeof toId !== 'string') {
+      socket.emit('room_error', {
+        message: 'Invalid move payload',
+      });
+      return;
+    }
+
+    const opponentSocketId = roomManager.getOpponentSocketId(room, socket.id);
+    if (!opponentSocketId) {
+      socket.emit('room_error', {
+        message: 'Opponent is not connected',
+      });
+      return;
+    }
+
+    socket.to(opponentSocketId).emit('opponent_move', {
+      fromId,
+      toId,
+      promotionTo: promotionTo || null,
+      side,
+    });
+  });
+
   socket.on('disconnect', (reason) => {
     console.log(`Socket disconnected: ${socket.id} (${reason})`);
     leaveCurrentRoom(socket, { notifySelf: false });

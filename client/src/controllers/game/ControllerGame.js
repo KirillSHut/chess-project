@@ -57,6 +57,7 @@ export class ControllerGame {
     this.onGameEnd = () => {};
     this.onBotThinkingChange = () => {};
     this.onBotMoveMetrics = () => {};
+    this.onMultiplayerMove = () => {};
   }
 
   init() {
@@ -92,7 +93,7 @@ export class ControllerGame {
    * Attempt to make a move from a given figure to a given target cell.
    * Used both by human player (via clicks) and bot.
    */
-  makeMove(fromId, toId, side) {
+  makeMove(fromId, toId, side, { promotionTo = null, source = 'local' } = {}) {
     if (this._isFinished) return { success: false, reason: 'game_finished' };
     if (this._isBotThinking && !this._isBotSide(side)) {
       return { success: false, reason: 'bot_thinking' };
@@ -103,14 +104,33 @@ export class ControllerGame {
       return { success: false, reason: 'illegal_move' };
     }
 
-    const result = this.ChessEngine.makeMove(fromId, toId, side);
+    const result = this.ChessEngine.makeMove(fromId, toId, side, { promotionTo });
     if (!result.success) return result;
 
     this._clearSelection();
     this._syncViewWithModel();
     this._handlePostMove(side, result.status);
 
+    if (this.mode === 'multiplayer' && source === 'local') {
+      this.onMultiplayerMove({
+        fromId,
+        toId,
+        promotionTo,
+      });
+    }
+
     return result;
+  }
+
+  applyOpponentMove({ fromId, toId, side, promotionTo = null }) {
+    if (this.mode !== 'multiplayer') {
+      return { success: false, reason: 'not_multiplayer' };
+    }
+
+    if (this._isFinished) return { success: false, reason: 'game_finished' };
+    if (side === this.playerSide) return { success: false, reason: 'own_side_move' };
+
+    return this.makeMove(fromId, toId, side, { promotionTo, source: 'opponent' });
   }
 
   scheduleBotMove() {

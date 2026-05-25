@@ -115,6 +115,25 @@ export class RoomManager {
     };
   }
 
+  getRoomById(roomId) {
+    return this.rooms.get(this._normalizeRoomId(roomId)) || null;
+  }
+
+  getSideForSocket(room, socketId) {
+    if (!room) return null;
+    if (room.players.white === socketId) return 'white';
+    if (room.players.black === socketId) return 'black';
+
+    return null;
+  }
+
+  getOpponentSocketId(room, socketId) {
+    const side = this.getSideForSocket(room, socketId);
+    if (!side) return null;
+
+    return side === 'white' ? room.players.black : room.players.white;
+  }
+
   _createRoomId() {
     let roomId = '';
 
