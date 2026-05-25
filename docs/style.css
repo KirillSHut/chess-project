@@ -176,6 +176,70 @@ button {
   color: #d98f78;
 }
 
+.multiplayer-room-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.room-input-field {
+  display: grid;
+  gap: 8px;
+  color: rgba(239, 232, 210, 0.72);
+  font-size: 14px;
+}
+
+.room-input-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(239, 232, 210, 0.16);
+  border-radius: 6px;
+  color: #f6edd9;
+  background: rgba(255, 255, 255, 0.04);
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.room-input-field input::placeholder {
+  color: rgba(239, 232, 210, 0.38);
+}
+
+.room-status-list {
+  display: grid;
+  gap: 9px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(239, 232, 210, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.room-status-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: rgba(239, 232, 210, 0.68);
+  font-size: 14px;
+}
+
+.room-status-list dt,
+.room-status-list dd {
+  margin: 0;
+}
+
+.room-status-list dd {
+  color: #f6edd9;
+  font-weight: 700;
+  text-align: right;
+}
+
+.room-error {
+  margin: 0 0 18px;
+  color: #d98f78;
+  font-size: 14px;
+}
+
 .ai-setup-grid {
   display: grid;
   gap: 14px;
