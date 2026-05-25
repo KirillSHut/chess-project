@@ -8,6 +8,7 @@
     "build": "npm run client:build",
     "client:dev": "webpack serve --config client/webpack.config.mjs --mode=development",
     "client:build": "npm run lint && webpack --config client/webpack.config.mjs --mode=production",
+    "server:dev": "npm --prefix server run dev",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",

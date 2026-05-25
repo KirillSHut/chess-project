@@ -12,7 +12,9 @@ client/
   webpack.config.mjs
 
 server/
-  README.md     Placeholder for future multiplayer server work
+  src/          Initial Express and Socket.IO server
+  package.json
+  README.md
 
 shared/
   chess/        Reusable chess rules and board configuration
@@ -54,10 +56,32 @@ npm run build
 The project is now arranged as a simple multiplayer-ready monorepo shape:
 
 - `client/` contains the existing playable React/PixiJS chess app.
-- `server/` is reserved for a future multiplayer backend.
+- `server/` contains the initial Express and Socket.IO multiplayer server foundation.
 - `shared/chess/` contains reusable chess rules and board configuration for both the client and future server.
 
-No multiplayer server is implemented yet. The current local game modes and AI systems remain client-side.
+No multiplayer rooms or chess synchronization are implemented yet. The current local game modes and AI systems remain client-side.
+
+## How To Run The Server
+
+Install server dependencies:
+
+```bash
+npm --prefix server install
+```
+
+Start the server from the repository root:
+
+```bash
+npm run server:dev
+```
+
+Or from inside `server/`:
+
+```bash
+npm run dev
+```
+
+The server exposes `GET /health` and accepts basic Socket.IO connections.
 
 ## Shared Chess
 
