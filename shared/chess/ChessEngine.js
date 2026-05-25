@@ -233,6 +233,63 @@ export class ChessEngine {
   }
 
   /**
+   * Export a plain serializable snapshot that can be sent over the network.
+   */
+  toSnapshot() {
+    return {
+      cells: this._cells.map((cell) => this._serializeCell(cell)),
+      activeSide: this._activeSide,
+      lastMove: this._serializeLastMove(this._lastMove),
+    };
+  }
+
+  /**
+   * Replace the current engine state from a plain serializable snapshot.
+   * The method only restores chess state and remains independent from UI/network code.
+   */
+  loadSnapshot(snapshot) {
+    if (!this._isValidSnapshot(snapshot)) {
+      return { success: false, reason: 'invalid_snapshot' };
+    }
+
+    try {
+      this._cells = snapshot.cells.map((cell) => ({
+        id: cell.id,
+        file: cell.file,
+        row: cell.row,
+        column: cell.column,
+        figure: cell.figure
+          ? {
+              name: cell.figure.name,
+              side: cell.figure.side,
+              hasMoved: Boolean(cell.figure.hasMoved),
+            }
+          : null,
+      }));
+
+      this._activeSide = snapshot.activeSide;
+      this._lastMove = snapshot.lastMove
+        ? {
+            fromId: snapshot.lastMove.fromId,
+            toId: snapshot.lastMove.toId,
+            figure: snapshot.lastMove.figure
+              ? {
+                  name: snapshot.lastMove.figure.name,
+                  side: snapshot.lastMove.figure.side,
+                  hasMoved: Boolean(snapshot.lastMove.figure.hasMoved),
+                }
+              : null,
+            isTwoStepPawnMove: Boolean(snapshot.lastMove.isTwoStepPawnMove),
+          }
+        : null;
+    } catch {
+      return { success: false, reason: 'invalid_snapshot' };
+    }
+
+    return { success: true };
+  }
+
+  /**
    * UTILITY API
    * ----------
    */
@@ -251,6 +308,63 @@ export class ChessEngine {
 
   getCell(row, column) {
     return this._cells.find((cell) => cell.row === row && cell.column === column);
+  }
+
+  _serializeCell(cell) {
+    return {
+      id: cell.id,
+      row: cell.row,
+      column: cell.column,
+      file: cell.file,
+      figure: cell.figure
+        ? {
+            name: cell.figure.name,
+            side: cell.figure.side,
+            hasMoved: Boolean(cell.figure.hasMoved),
+          }
+        : null,
+    };
+  }
+
+  _serializeLastMove(lastMove) {
+    if (!lastMove) return null;
+
+    return {
+      fromId: lastMove.fromId,
+      toId: lastMove.toId,
+      figure: lastMove.figure
+        ? {
+            name: lastMove.figure.name,
+            side: lastMove.figure.side,
+            hasMoved: Boolean(lastMove.figure.hasMoved),
+          }
+        : null,
+      isTwoStepPawnMove: Boolean(lastMove.isTwoStepPawnMove),
+    };
+  }
+
+  _isValidSnapshot(snapshot) {
+    if (!snapshot || !Array.isArray(snapshot.cells)) return false;
+    if (snapshot.cells.length !== chessCells.length) return false;
+    if (snapshot.activeSide !== 'white' && snapshot.activeSide !== 'black') return false;
+
+    const validCellIds = new Set(chessCells.map((cell) => cell.id));
+    const snapshotCellIds = new Set();
+
+    return snapshot.cells.every((cell) => {
+      if (!cell || !validCellIds.has(cell.id) || snapshotCellIds.has(cell.id)) {
+        return false;
+      }
+
+      snapshotCellIds.add(cell.id);
+
+      if (!cell.figure) return true;
+
+      return (
+        typeof cell.figure.name === 'string' &&
+        (cell.figure.side === 'white' || cell.figure.side === 'black')
+      );
+    });
   }
 
   /**

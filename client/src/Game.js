@@ -12,6 +12,7 @@ export class Game {
       playerSide = 'white',
       botSide = 'black',
       botEnabled = true,
+      initialState = null,
       onGameEnd = () => {},
       onBotThinkingChange = () => {},
       onBotMoveMetrics = () => {},
@@ -26,6 +27,7 @@ export class Game {
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
+    this.initialState = initialState;
     this.onGameEnd = onGameEnd;
     this.onBotThinkingChange = onBotThinkingChange;
     this.onBotMoveMetrics = onBotMoveMetrics;
@@ -43,6 +45,7 @@ export class Game {
       botEnabled: this.botEnabled,
       botDifficulty: this.botDifficulty,
       botDifficulties: this.botDifficulties,
+      initialState: this.initialState,
     });
 
     this.ControllerGame.init();
@@ -96,6 +99,10 @@ export class Game {
     }
 
     return this.ControllerGame.applyConfirmedMultiplayerMove(move);
+  }
+
+  loadMultiplayerSnapshot(snapshot, meta = {}) {
+    return this.ControllerGame.loadMultiplayerSnapshot(snapshot, meta);
   }
 
   handleInvalidMultiplayerMove() {

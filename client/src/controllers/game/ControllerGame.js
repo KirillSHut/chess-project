@@ -21,6 +21,7 @@ export class ControllerGame {
       botEnabled = true,
       botDifficulty = 'random',
       botDifficulties = null,
+      initialState = null,
     } = {},
   ) {
     this.stage = stage;
@@ -29,6 +30,7 @@ export class ControllerGame {
     this.playerSide = playerSide;
     this.botSide = botSide;
     this.botEnabled = botEnabled;
+    this.initialState = initialState;
     this.botDifficulties =
       botDifficulties ||
       (botEnabled
@@ -63,6 +65,11 @@ export class ControllerGame {
 
   init() {
     this.ChessEngine = new ChessEngine();
+    if (this.initialState) {
+      this.ChessEngine.loadSnapshot(this.initialState);
+      this.currentTurn = this.ChessEngine.activeSide;
+    }
+
     this.ControllerView = new ControllerView(this.stage);
 
     this.ControllerView.initFigures(this.ChessEngine.cells);
@@ -77,7 +84,7 @@ export class ControllerGame {
 
   startGame() {
     this.cancelPendingBotTurn();
-    this.currentTurn = 'white';
+    this.currentTurn = this.ChessEngine?.activeSide || 'white';
     this._isFinished = false;
     this._isMultiplayerMovePending = false;
     this.botMoveMetrics = [];
@@ -134,14 +141,50 @@ export class ControllerGame {
     return result;
   }
 
-  applyConfirmedMultiplayerMove({ fromId, toId, side, promotionTo = null }) {
+  applyConfirmedMultiplayerMove({
+    fromId,
+    toId,
+    side,
+    promotionTo = null,
+    status = null,
+    gameState = null,
+  }) {
     if (this.mode !== 'multiplayer') {
       return { success: false, reason: 'not_multiplayer' };
     }
 
     if (this._isFinished) return { success: false, reason: 'game_finished' };
 
+    if (gameState) {
+      return this.loadMultiplayerSnapshot(gameState, { status, side });
+    }
+
     return this.makeMove(fromId, toId, side, { promotionTo, source: 'server' });
+  }
+
+  loadMultiplayerSnapshot(snapshot, { status = null, side = null } = {}) {
+    if (!this.ChessEngine) {
+      return { success: false, reason: 'engine_not_ready' };
+    }
+
+    const result = this.ChessEngine.loadSnapshot(snapshot);
+    if (!result.success) return result;
+
+    this._isMultiplayerMovePending = false;
+    this.currentTurn = this.ChessEngine.activeSide;
+    this._clearSelection();
+
+    if (this.ControllerView) {
+      this._syncViewWithModel();
+    }
+
+    if (status === 'checkmate') {
+      this.endGame('checkmate', side);
+    } else if (status === 'stalemate') {
+      this.endGame('stalemate', null);
+    }
+
+    return { success: true };
   }
 
   handleInvalidMultiplayerMove() {

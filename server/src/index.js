@@ -83,14 +83,7 @@ io.on('connection', (socket) => {
       });
 
       if (room.status === 'playing') {
-        io.to(room.id).emit('game_started', {
-          roomId: room.id,
-          players: {
-            white: room.players.white,
-            black: room.players.black,
-          },
-          initialState: null,
-        });
+        emitGameStarted(room);
       }
     } catch (error) {
       socket.emit('room_error', {
@@ -181,6 +174,7 @@ io.on('connection', (socket) => {
       status: result.status,
       moveInfo: result.moveInfo,
       activeSide: room.engine.activeSide,
+      gameState: createGameState(room),
     });
   });
 
@@ -245,6 +239,39 @@ function leaveAllRoomsForSocket(socket, { opponentEvent } = {}) {
 
   socket.data.roomId = null;
   socket.data.side = null;
+}
+
+function emitGameStarted(room) {
+  const players = {
+    white: room.players.white,
+    black: room.players.black,
+  };
+  const gameState = createGameState(room);
+
+  if (room.players.white) {
+    io.to(room.players.white).emit('game_started', {
+      roomId: room.id,
+      playerSide: 'white',
+      players,
+      gameState,
+    });
+  }
+
+  if (room.players.black) {
+    io.to(room.players.black).emit('game_started', {
+      roomId: room.id,
+      playerSide: 'black',
+      players,
+      gameState,
+    });
+  }
+}
+
+function createGameState(room) {
+  return {
+    ...room.engine.toSnapshot(),
+    status: room.status,
+  };
 }
 
 httpServer.listen(PORT, () => {

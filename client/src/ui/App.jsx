@@ -55,6 +55,7 @@ export function App() {
         mode={gameConfig.mode}
         roomId={gameConfig.roomId}
         playerSide={gameConfig.playerSide}
+        initialState={gameConfig.initialState}
         botDifficulties={gameConfig.botDifficulties}
         onBackToMenu={() => setScreen(screens.MAIN)}
         onBackToMultiplayer={() => setScreen(screens.MULTIPLAYER)}

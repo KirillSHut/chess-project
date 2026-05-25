@@ -14,6 +14,7 @@ export function GameScreen({
   mode,
   roomId,
   playerSide,
+  initialState,
   botDifficulties,
   onBackToMenu,
   onBackToMultiplayer,
@@ -66,6 +67,7 @@ export function GameScreen({
         mode,
         botDifficulties,
         playerSide,
+        initialState,
         botEnabled: mode !== 'multiplayer',
         onGameEnd: setGameResult,
         onBotThinkingChange: setIsBotThinking,
@@ -154,7 +156,7 @@ export function GameScreen({
         app.destroy(true);
       }
     };
-  }, [botDifficulties, mode, playerSide, roomId, sessionId]);
+  }, [botDifficulties, initialState, mode, playerSide, roomId, sessionId]);
 
   const restartGame = () => {
     setGameResult(null);

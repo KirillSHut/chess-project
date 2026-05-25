@@ -70,8 +70,8 @@ export function MultiplayerScreen({ onBack, onGameStart }) {
         setRoomError(message || 'Room error');
         setRoomStatus(code === 'opponent_disconnected' ? 'Opponent disconnected' : 'Error');
       },
-      onGameStarted: ({ roomId: startedRoomId, players }) => {
-        const side = players?.white === socket.id ? 'white' : 'black';
+      onGameStarted: ({ roomId: startedRoomId, playerSide: assignedSide, players, gameState }) => {
+        const side = assignedSide || (players?.white === socket.id ? 'white' : 'black');
         isStartingGameRef.current = true;
 
         onGameStart({
@@ -79,6 +79,7 @@ export function MultiplayerScreen({ onBack, onGameStart }) {
           roomId: startedRoomId,
           playerSide: side,
           opponentConnected: true,
+          initialState: gameState,
           botDifficulties: {},
         });
       },
