@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "npm run dev",
-    "build": "npm run lint && webpack --mode=production",
+    "start": "npm run client:dev",
+    "build": "npm run client:build",
+    "client:dev": "webpack serve --config client/webpack.config.mjs --mode=development",
+    "client:build": "npm run lint && webpack --config client/webpack.config.mjs --mode=production",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "dev": "webpack serve --mode=development"
+    "dev": "npm run client:dev"
   },
   "dependencies": {
     "pixi.js": "^8.8.1",

@@ -7,7 +7,7 @@ import TerserPlugin from 'terser-webpack-plugin';
 export default (_env, argv) => {
   return {
     stats: 'minimal', // Keep console output easy to read.
-    entry: './src/main.js', // Your program entry point
+    entry: './client/src/main.js', // Your program entry point
 
     // Your build destination
     output: {
@@ -74,12 +74,12 @@ export default (_env, argv) => {
     plugins: [
       // Copy our static assets to the final build
       new CopyPlugin({
-        patterns: [{ from: 'public/' }],
+        patterns: [{ from: 'client/public/' }],
       }),
 
       // Make an index.html from the template
       new HtmlWebpackPlugin({
-        template: './index.html',
+        template: './client/index.html',
         hash: true,
         minify: false,
       }),

@@ -5,7 +5,7 @@ import reactPlugin from 'eslint-plugin-react';
 
 export default [
   {
-    ignores: ['dist', 'node_modules'],
+    ignores: ['dist', 'docs', 'node_modules'],
   },
   js.configs.recommended,
   eslintConfigPrettier,

@@ -15,9 +15,9 @@ Main technologies:
 The current implementation contains:
 
 - `ChessEngine` as the model and chess-rule source of truth
-- React application shell in `src/ui`
+- React application shell in `client/src/ui`
 - MVC-style coordination through `ControllerGame`
-- Dedicated bot logic in `src/ai`
+- Dedicated bot logic in `client/src/ai`
 - PixiJS board and piece rendering through `ControllerView`
 - `CellContainer` and `BaseFigure` Pixi components
 - Turn management
@@ -36,8 +36,8 @@ Keep future changes aligned with the real implementation. Do not document or bui
 
 Related project docs:
 
-- `docs/architecture.md` explains the current architecture and module boundaries.
-- `docs/devlog.md` records architecture decisions and foundation changes.
+- `docsMD/architecture.md` explains the current architecture and module boundaries.
+- `docsMD/devlog.md` records architecture decisions and foundation changes.
 
 ---
 
@@ -45,7 +45,7 @@ Related project docs:
 
 ## Model: `ChessEngine`
 
-`src/models/ChessEngine.js` stores the logical board state and owns chess rules.
+`client/src/models/ChessEngine.js` stores the logical board state and owns chess rules.
 
 It currently handles:
 
@@ -73,7 +73,7 @@ Public engine simulation APIs:
 
 ## Game Controller: `ControllerGame`
 
-`src/controllers/game/ControllerGame.js` coordinates the model and view.
+`client/src/controllers/game/ControllerGame.js` coordinates the model and view.
 
 It currently owns:
 
@@ -92,7 +92,7 @@ This class is intentionally the main integration layer. It is acceptable for it 
 
 ## View: `ControllerView`
 
-`src/view/ControllerView.js` owns PixiJS board and figure rendering.
+`client/src/view/ControllerView.js` owns PixiJS board and figure rendering.
 
 It currently handles:
 
@@ -107,7 +107,7 @@ The view may read model-shaped data passed into it, but it must not validate che
 
 ## Pixi Components
 
-`src/controllers/components/Cell.js` and `src/controllers/components/figures/BaseFigure.js` are PixiJS display components.
+`client/src/controllers/components/Cell.js` and `client/src/controllers/components/figures/BaseFigure.js` are PixiJS display components.
 
 They currently handle:
 
@@ -120,7 +120,7 @@ These components should stay visual and input-focused. They should not contain c
 
 ## React UI Shell
 
-`src/ui` owns application-level screens and menu navigation.
+`client/src/ui` owns application-level screens and menu navigation.
 
 It currently handles:
 
@@ -134,7 +134,7 @@ React must stay an application shell. Do not move chess rules, board rendering, 
 
 ## Game Bootstrap
 
-`src/main.js` bootstraps React. `src/ui/GameScreen.jsx` creates the PixiJS application when the game screen is opened. `src/Game.js` owns the top-level chess game lifecycle.
+`client/src/main.js` bootstraps React. `client/src/ui/GameScreen.jsx` creates the PixiJS application when the game screen is opened. `client/src/Game.js` owns the top-level chess game lifecycle.
 
 They currently handle:
 

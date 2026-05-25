@@ -4,24 +4,24 @@ This project is a local browser chess game built with JavaScript ES modules, Rea
 
 ## High-Level Flow
 
-1. `src/main.js` mounts the React application shell.
-2. `src/ui/App.jsx` controls simple menu navigation with React state.
-3. `src/ui/GameScreen.jsx` creates the PixiJS application when a playable mode is selected.
-4. `src/Game.js` loads assets and owns the top-level chess game lifecycle.
-5. `src/controllers/game/ControllerGame.js` creates and coordinates the model and view.
-6. `src/ai` chooses bot moves from engine-generated legal moves.
-7. `src/models/ChessEngine.js` stores board state and validates chess rules.
-8. `src/view/ControllerView.js` renders board cells and pieces with PixiJS.
+1. `client/src/main.js` mounts the React application shell.
+2. `client/src/ui/App.jsx` controls simple menu navigation with React state.
+3. `client/src/ui/GameScreen.jsx` creates the PixiJS application when a playable mode is selected.
+4. `client/src/Game.js` loads assets and owns the top-level chess game lifecycle.
+5. `client/src/controllers/game/ControllerGame.js` creates and coordinates the model and view.
+6. `client/src/ai` chooses bot moves from engine-generated legal moves.
+7. `client/src/models/ChessEngine.js` stores board state and validates chess rules.
+8. `client/src/view/ControllerView.js` renders board cells and pieces with PixiJS.
 9. Pixi components emit pointer callbacks back into the controller.
 
 ## Module Responsibilities
 
 ### React UI Shell
 
-`src/ui/App.jsx`
-`src/ui/MainMenu.jsx`
-`src/ui/BotDifficultyMenu.jsx`
-`src/ui/GameScreen.jsx`
+`client/src/ui/App.jsx`
+`client/src/ui/MainMenu.jsx`
+`client/src/ui/BotDifficultyMenu.jsx`
+`client/src/ui/GameScreen.jsx`
 
 Owns:
 
@@ -42,7 +42,7 @@ Must not own:
 
 ### Model
 
-`src/models/ChessEngine.js`
+`client/src/models/ChessEngine.js`
 
 Owns:
 
@@ -72,7 +72,7 @@ Simulation API:
 
 ### Game Controller
 
-`src/controllers/game/ControllerGame.js`
+`client/src/controllers/game/ControllerGame.js`
 
 Owns:
 
@@ -89,14 +89,14 @@ This is the integration layer. It is allowed to know about both `ChessEngine` an
 
 ### AI
 
-`src/ai/RandomBot.js`
-`src/ai/GreedyBot.js`
-`src/ai/MinimaxBot.js`
-`src/ai/constants/pieceValues.js`
-`src/ai/constants/pieceSquareTables.js`
-`src/ai/evaluators/evaluateBoard.js`
-`src/ai/utils/getLegalMoves.js`
-`src/ai/utils/orderMoves.js`
+`client/src/ai/RandomBot.js`
+`client/src/ai/GreedyBot.js`
+`client/src/ai/MinimaxBot.js`
+`client/src/ai/constants/pieceValues.js`
+`client/src/ai/constants/pieceSquareTables.js`
+`client/src/ai/evaluators/evaluateBoard.js`
+`client/src/ai/utils/getLegalMoves.js`
+`client/src/ai/utils/orderMoves.js`
 
 Owns:
 
@@ -117,7 +117,7 @@ Must not own:
 
 ### View
 
-`src/view/ControllerView.js`
+`client/src/view/ControllerView.js`
 
 Owns:
 
@@ -137,8 +137,8 @@ Must not decide:
 
 ### Pixi Components
 
-`src/controllers/components/Cell.js`
-`src/controllers/components/figures/BaseFigure.js`
+`client/src/controllers/components/Cell.js`
+`client/src/controllers/components/figures/BaseFigure.js`
 
 Own:
 
@@ -151,14 +151,14 @@ These classes should stay display-object focused.
 
 ### Bootstrap
 
-`src/main.js`
+`client/src/main.js`
 
 Own:
 
 - React application mount
 
-`src/ui/GameScreen.jsx`
-`src/Game.js`
+`client/src/ui/GameScreen.jsx`
+`client/src/Game.js`
 
 Own:
 

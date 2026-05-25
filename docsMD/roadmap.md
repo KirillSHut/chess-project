@@ -86,7 +86,7 @@ Separate AI logic from the main game controller.
 Create:
 
 ```text
-src/ai/RandomBot.js
+client/src/ai/RandomBot.js
 ```
 
 ### Create bot interface
