@@ -50,6 +50,7 @@ export class ControllerGame {
     this._isBotThinking = false;
     this._botTurnToken = 0;
     this._pendingBotTurnId = null;
+    this._isMultiplayerMovePending = false;
     this.botMoveMetrics = [];
     this.lastBotMoveMetrics = null;
     this.halfMoveCount = 0;
@@ -78,6 +79,7 @@ export class ControllerGame {
     this.cancelPendingBotTurn();
     this.currentTurn = 'white';
     this._isFinished = false;
+    this._isMultiplayerMovePending = false;
     this.botMoveMetrics = [];
     this.lastBotMoveMetrics = null;
     this.halfMoveCount = 0;
@@ -98,39 +100,52 @@ export class ControllerGame {
     if (this._isBotThinking && !this._isBotSide(side)) {
       return { success: false, reason: 'bot_thinking' };
     }
+    if (this._isMultiplayerMovePending && source === 'local') {
+      return { success: false, reason: 'move_pending' };
+    }
     if (side !== this.currentTurn) return { success: false, reason: 'not_your_turn' };
 
     if (!this.ChessEngine.isMoveLegal(fromId, toId, side)) {
       return { success: false, reason: 'illegal_move' };
     }
 
-    const result = this.ChessEngine.makeMove(fromId, toId, side, { promotionTo });
-    if (!result.success) return result;
-
-    this._clearSelection();
-    this._syncViewWithModel();
-    this._handlePostMove(side, result.status);
-
     if (this.mode === 'multiplayer' && source === 'local') {
+      this._isMultiplayerMovePending = true;
+      this._clearSelection();
       this.onMultiplayerMove({
         fromId,
         toId,
         promotionTo,
       });
+      return { success: true, pending: true };
     }
+
+    const result = this.ChessEngine.makeMove(fromId, toId, side, { promotionTo });
+    if (!result.success) return result;
+
+    if (this.mode === 'multiplayer') {
+      this._isMultiplayerMovePending = false;
+    }
+
+    this._clearSelection();
+    this._syncViewWithModel();
+    this._handlePostMove(side, result.status);
 
     return result;
   }
 
-  applyOpponentMove({ fromId, toId, side, promotionTo = null }) {
+  applyConfirmedMultiplayerMove({ fromId, toId, side, promotionTo = null }) {
     if (this.mode !== 'multiplayer') {
       return { success: false, reason: 'not_multiplayer' };
     }
 
     if (this._isFinished) return { success: false, reason: 'game_finished' };
-    if (side === this.playerSide) return { success: false, reason: 'own_side_move' };
 
-    return this.makeMove(fromId, toId, side, { promotionTo, source: 'opponent' });
+    return this.makeMove(fromId, toId, side, { promotionTo, source: 'server' });
+  }
+
+  handleInvalidMultiplayerMove() {
+    this._isMultiplayerMovePending = false;
   }
 
   scheduleBotMove() {
@@ -217,7 +232,14 @@ export class ControllerGame {
   }
 
   _onFigureClick(figure) {
-    if (this._isFinished || this._isBotThinking || !this._isHumanTurn()) return;
+    if (
+      this._isFinished ||
+      this._isBotThinking ||
+      this._isMultiplayerMovePending ||
+      !this._isHumanTurn()
+    ) {
+      return;
+    }
 
     if (figure.side !== this.currentTurn) {
       if (this.selectedFigure) {
@@ -253,7 +275,14 @@ export class ControllerGame {
   }
 
   _onCellClick(cellView) {
-    if (this._isFinished || this._isBotThinking || !this._isHumanTurn()) return;
+    if (
+      this._isFinished ||
+      this._isBotThinking ||
+      this._isMultiplayerMovePending ||
+      !this._isHumanTurn()
+    ) {
+      return;
+    }
     if (!this.selectedFigure) return;
 
     const fromId = this.selectedFigure.cellView.id;

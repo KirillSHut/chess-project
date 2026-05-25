@@ -107,22 +107,37 @@ io.on('connection', (socket) => {
     const room = roomManager.getRoomById(roomId);
 
     if (!room) {
-      socket.emit('room_error', {
+      socket.emit('invalid_move', {
         message: 'Room not found',
+      });
+      return;
+    }
+
+    if (room.status !== 'playing') {
+      socket.emit('invalid_move', {
+        message: 'Game is not active',
       });
       return;
     }
 
     const side = roomManager.getSideForSocket(room, socket.id);
     if (!side) {
-      socket.emit('room_error', {
+      socket.emit('invalid_move', {
         message: 'Sender is not in this room',
       });
       return;
     }
 
+    if (side !== room.engine.activeSide) {
+      socket.emit('invalid_move', {
+        message: 'Not your turn',
+        activeSide: room.engine.activeSide,
+      });
+      return;
+    }
+
     if (typeof fromId !== 'string' || typeof toId !== 'string') {
-      socket.emit('room_error', {
+      socket.emit('invalid_move', {
         message: 'Invalid move payload',
       });
       return;
@@ -130,17 +145,38 @@ io.on('connection', (socket) => {
 
     const opponentSocketId = roomManager.getOpponentSocketId(room, socket.id);
     if (!opponentSocketId) {
-      socket.emit('room_error', {
+      socket.emit('invalid_move', {
         message: 'Opponent is not connected',
       });
       return;
     }
 
-    socket.to(opponentSocketId).emit('opponent_move', {
+    const result = room.engine.makeMove(fromId, toId, side, {
+      promotionTo: promotionTo || null,
+    });
+
+    if (!result.success) {
+      socket.emit('invalid_move', {
+        message: result.reason || 'Invalid move',
+        reason: result.reason,
+        activeSide: room.engine.activeSide,
+      });
+      return;
+    }
+
+    if (result.status === 'checkmate' || result.status === 'stalemate') {
+      room.status = 'finished';
+    }
+
+    io.to(room.id).emit('move_applied', {
+      roomId: room.id,
       fromId,
       toId,
       promotionTo: promotionTo || null,
       side,
+      status: result.status,
+      moveInfo: result.moveInfo,
+      activeSide: room.engine.activeSide,
     });
   });
 

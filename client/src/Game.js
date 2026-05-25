@@ -90,12 +90,16 @@ export class Game {
     return this.ControllerGame.getBotMoveMetrics();
   }
 
-  applyOpponentMove(move) {
+  applyConfirmedMultiplayerMove(move) {
     if (this._isFinished) {
       return { success: false, reason: 'game_finished' };
     }
 
-    return this.ControllerGame.applyOpponentMove(move);
+    return this.ControllerGame.applyConfirmedMultiplayerMove(move);
+  }
+
+  handleInvalidMultiplayerMove() {
+    this.ControllerGame.handleInvalidMultiplayerMove();
   }
 
   endGame(result) {

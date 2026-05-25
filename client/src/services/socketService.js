@@ -68,8 +68,12 @@ export function subscribeToRoomEvents(handlers) {
     activeSocket.on('game_started', handlers.onGameStarted);
   }
 
-  if (handlers.onOpponentMove) {
-    activeSocket.on('opponent_move', handlers.onOpponentMove);
+  if (handlers.onMoveApplied) {
+    activeSocket.on('move_applied', handlers.onMoveApplied);
+  }
+
+  if (handlers.onInvalidMove) {
+    activeSocket.on('invalid_move', handlers.onInvalidMove);
   }
 
   return () => {
@@ -97,8 +101,12 @@ export function subscribeToRoomEvents(handlers) {
       activeSocket.off('game_started', handlers.onGameStarted);
     }
 
-    if (handlers.onOpponentMove) {
-      activeSocket.off('opponent_move', handlers.onOpponentMove);
+    if (handlers.onMoveApplied) {
+      activeSocket.off('move_applied', handlers.onMoveApplied);
+    }
+
+    if (handlers.onInvalidMove) {
+      activeSocket.off('invalid_move', handlers.onInvalidMove);
     }
   };
 }

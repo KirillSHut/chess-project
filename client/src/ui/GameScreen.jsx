@@ -62,6 +62,7 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
         onMultiplayerMove: ({ fromId, toId, promotionTo }) => {
           if (mode !== 'multiplayer') return;
 
+          setMultiplayerStatus('Move pending');
           sendMove({
             roomId,
             fromId,
@@ -81,14 +82,26 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
       game.init();
       if (mode === 'multiplayer') {
         unsubscribeFromRoomEvents = subscribeToRoomEvents({
-          onOpponentMove: (move) => {
-            const result = game?.applyOpponentMove(move);
+          onMoveApplied: (move) => {
+            const result = game?.applyConfirmedMultiplayerMove(move);
 
             if (result && !result.success) {
-              console.log(`Failed to apply opponent move: ${result.reason}`);
+              console.log(`Failed to apply confirmed move: ${result.reason}`);
+              return;
             }
+
+            setMultiplayerStatus(
+              move.status === 'checkmate' || move.status === 'stalemate'
+                ? 'Game over'
+                : 'Connected',
+            );
+          },
+          onInvalidMove: ({ message }) => {
+            game?.handleInvalidMultiplayerMove();
+            setMultiplayerStatus(message || 'Invalid move');
           },
           onRoomError: ({ code, message }) => {
+            game?.handleInvalidMultiplayerMove();
             setMultiplayerStatus(
               code === 'opponent_disconnected' ? 'Opponent disconnected' : message || 'Room error',
             );

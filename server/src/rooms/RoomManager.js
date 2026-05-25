@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { ChessEngine } from '../../../shared/chess/ChessEngine.js';
 
 const ROOM_ID_LENGTH = 6;
 
@@ -15,6 +16,7 @@ export class RoomManager {
         white: socketId,
         black: null,
       },
+      engine: new ChessEngine(),
       status: 'waiting',
     };
 
@@ -92,7 +94,7 @@ export class RoomManager {
       };
     }
 
-    room.status = 'waiting';
+    room.status = room.status === 'finished' ? 'finished' : 'waiting';
 
     return {
       roomId,
