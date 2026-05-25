@@ -48,7 +48,7 @@ export class RoomManager {
       };
     }
 
-    if (room.players.white && room.players.black) {
+    if (room.status === 'playing' || (room.players.white && room.players.black)) {
       throw new Error('Room is full');
     }
 
@@ -63,7 +63,7 @@ export class RoomManager {
     }
 
     room.players.black = socketId;
-    room.status = 'ready';
+    room.status = 'playing';
 
     return {
       room,

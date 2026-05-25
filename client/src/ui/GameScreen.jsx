@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application } from 'pixi.js';
 import { Game } from '../Game.js';
+import { disconnectSocket, leaveRoom } from '../services/socketService.js';
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
-export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) {
+export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackToMenu }) {
   const pixiRootRef = useRef(null);
   const [gameResult, setGameResult] = useState(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
@@ -43,6 +44,7 @@ export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) 
         mode,
         botDifficulties,
         playerSide,
+        botEnabled: mode !== 'multiplayer',
         onGameEnd: setGameResult,
         onBotThinkingChange: setIsBotThinking,
         onBotMoveMetrics: setLastBotMoveMetrics,
@@ -65,6 +67,10 @@ export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) 
     return () => {
       isMounted = false;
       game?.dispose();
+      if (mode === 'multiplayer') {
+        leaveRoom();
+        disconnectSocket();
+      }
       setIsBotThinking(false);
       setLastBotMoveMetrics(null);
       window.removeEventListener('resize', resize);
@@ -84,7 +90,9 @@ export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) 
   const modeLabel =
     mode === 'ai-vs-ai'
       ? `White: ${formatDifficulty(botDifficulties.white)} / Black: ${formatDifficulty(botDifficulties.black)}`
-      : `Bot: ${formatDifficulty(botDifficulties.black)}`;
+      : mode === 'multiplayer'
+        ? `Multiplayer: ${formatSide(playerSide)}${roomId ? ` / Room ${roomId}` : ''}`
+        : `Bot: ${formatDifficulty(botDifficulties.black)}`;
 
   return (
     <main className="game-screen">
@@ -95,7 +103,7 @@ export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) 
         <span className="game-mode">{modeLabel}</span>
         {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
       </div>
-      <AiMetricsPanel metrics={lastBotMoveMetrics} />
+      {mode !== 'multiplayer' && <AiMetricsPanel metrics={lastBotMoveMetrics} />}
       <div className="pixi-stage" ref={pixiRootRef} />
       {gameResult && (
         <EndGameOverlay
@@ -111,4 +119,8 @@ export function GameScreen({ mode, playerSide, botDifficulties, onBackToMenu }) 
 
 function formatDifficulty(difficulty) {
   return `${difficulty[0].toUpperCase()}${difficulty.slice(1)}`;
+}
+
+function formatSide(side) {
+  return `${side[0].toUpperCase()}${side.slice(1)}`;
 }

@@ -44,10 +44,16 @@ export function App() {
     setScreen(screens.GAME);
   };
 
+  const startMultiplayerGame = (session) => {
+    setGameConfig(session);
+    setScreen(screens.GAME);
+  };
+
   if (screen === screens.GAME) {
     return (
       <GameScreen
         mode={gameConfig.mode}
+        roomId={gameConfig.roomId}
         playerSide={gameConfig.playerSide}
         botDifficulties={gameConfig.botDifficulties}
         onBackToMenu={() => setScreen(screens.MAIN)}
@@ -77,7 +83,10 @@ export function App() {
       )}
 
       {screen === screens.MULTIPLAYER && (
-        <MultiplayerScreen onBack={() => setScreen(screens.MAIN)} />
+        <MultiplayerScreen
+          onBack={() => setScreen(screens.MAIN)}
+          onGameStart={startMultiplayerGame}
+        />
       )}
     </main>
   );

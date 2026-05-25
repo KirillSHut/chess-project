@@ -55,6 +55,10 @@ export function subscribeToRoomEvents(handlers) {
     activeSocket.on('room_error', handlers.onRoomError);
   }
 
+  if (handlers.onGameStarted) {
+    activeSocket.on('game_started', handlers.onGameStarted);
+  }
+
   return () => {
     if (handlers.onRoomCreated) {
       activeSocket.off('room_created', handlers.onRoomCreated);
@@ -74,6 +78,10 @@ export function subscribeToRoomEvents(handlers) {
 
     if (handlers.onRoomError) {
       activeSocket.off('room_error', handlers.onRoomError);
+    }
+
+    if (handlers.onGameStarted) {
+      activeSocket.off('game_started', handlers.onGameStarted);
     }
   };
 }

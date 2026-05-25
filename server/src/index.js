@@ -81,6 +81,17 @@ io.on('connection', (socket) => {
         roomId: room.id,
         room: roomManager.getPublicRoom(room),
       });
+
+      if (room.status === 'playing') {
+        io.to(room.id).emit('game_started', {
+          roomId: room.id,
+          players: {
+            white: room.players.white,
+            black: room.players.black,
+          },
+          initialState: null,
+        });
+      }
     } catch (error) {
       socket.emit('room_error', {
         message: error.message,

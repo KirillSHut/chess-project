@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   connectSocket,
   createRoom,
@@ -15,13 +15,14 @@ const connectionLabels = {
   error: 'Connection error',
 };
 
-export function MultiplayerScreen({ onBack }) {
+export function MultiplayerScreen({ onBack, onGameStart }) {
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const [roomId, setRoomId] = useState('');
   const [joinRoomId, setJoinRoomId] = useState('');
   const [playerSide, setPlayerSide] = useState(null);
   const [roomStatus, setRoomStatus] = useState('No room');
   const [roomError, setRoomError] = useState('');
+  const isStartingGameRef = useRef(false);
 
   const resetRoomState = () => {
     setRoomId('');
@@ -55,11 +56,11 @@ export function MultiplayerScreen({ onBack }) {
         setRoomId(joinedRoomId);
         setJoinRoomId(joinedRoomId);
         setPlayerSide(side);
-        setRoomStatus(room?.status === 'ready' ? `Joined as ${side}` : 'Waiting for opponent');
+        setRoomStatus(room?.status === 'playing' ? `Joined as ${side}` : 'Waiting for opponent');
         setRoomError('');
       },
       onPlayerJoined: ({ room }) => {
-        setRoomStatus(room?.status === 'ready' ? 'Opponent joined' : 'Waiting for opponent');
+        setRoomStatus(room?.status === 'playing' ? 'Opponent joined' : 'Waiting for opponent');
         setRoomError('');
       },
       onRoomLeft: () => {
@@ -69,6 +70,18 @@ export function MultiplayerScreen({ onBack }) {
         setRoomError(message || 'Room error');
         setRoomStatus(code === 'opponent_disconnected' ? 'Opponent disconnected' : 'Error');
       },
+      onGameStarted: ({ roomId: startedRoomId, players }) => {
+        const side = players?.white === socket.id ? 'white' : 'black';
+        isStartingGameRef.current = true;
+
+        onGameStart({
+          mode: 'multiplayer',
+          roomId: startedRoomId,
+          playerSide: side,
+          opponentConnected: true,
+          botDifficulties: {},
+        });
+      },
     });
 
     if (socket.connected) {
@@ -76,12 +89,15 @@ export function MultiplayerScreen({ onBack }) {
     }
 
     return () => {
-      leaveRoom();
+      if (!isStartingGameRef.current) {
+        leaveRoom();
+        disconnectSocket();
+      }
+
       unsubscribeFromRoomEvents();
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.off('connect_error', handleConnectError);
-      disconnectSocket();
     };
   }, []);
 
