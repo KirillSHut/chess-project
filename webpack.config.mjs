@@ -11,7 +11,7 @@ export default (_env, argv) => {
 
     // Your build destination
     output: {
-      path: path.resolve(process.cwd(), 'dist'),
+      path: path.resolve(process.cwd(), 'docs'),
       filename: 'bundle.js',
       clean: true,
     },
