@@ -50,7 +50,12 @@ export class RoomManager {
       };
     }
 
-    if (room.status === 'playing' || (room.players.white && room.players.black)) {
+    if (
+      room.status === 'playing' ||
+      room.status === 'finished' ||
+      room.status === 'ended' ||
+      (room.players.white && room.players.black)
+    ) {
       throw new Error('Room is full');
     }
 
@@ -73,31 +78,33 @@ export class RoomManager {
     };
   }
 
-  leaveRoom(socketId) {
-    const roomEntry = this._findRoomBySocketId(socketId);
+  leaveRoom(socketId, roomId = null) {
+    const roomEntry = roomId ? this._getRoomEntryById(roomId) : this._findRoomBySocketId(socketId);
     if (!roomEntry) return null;
 
-    const [roomId, room] = roomEntry;
+    const [resolvedRoomId, room] = roomEntry;
     const side = room.players.white === socketId ? 'white' : 'black';
+    if (!side) return null;
+
     room.players[side] = null;
 
     const remainingSide = room.players.white ? 'white' : room.players.black ? 'black' : null;
     const remainingSocketId = remainingSide ? room.players[remainingSide] : null;
 
     if (!remainingSocketId) {
-      this.rooms.delete(roomId);
+      this.rooms.delete(resolvedRoomId);
       return {
-        roomId,
+        roomId: resolvedRoomId,
         side,
         room: null,
         remainingSocketId: null,
       };
     }
 
-    room.status = room.status === 'finished' ? 'finished' : 'waiting';
+    room.status = room.status === 'playing' || room.status === 'finished' ? 'ended' : 'waiting';
 
     return {
-      roomId,
+      roomId: resolvedRoomId,
       side,
       room,
       remainingSocketId,
@@ -161,5 +168,12 @@ export class RoomManager {
     return [...this.rooms.entries()].find(([, room]) => {
       return room.players.white === socketId || room.players.black === socketId;
     });
+  }
+
+  _getRoomEntryById(roomId) {
+    const normalizedRoomId = this._normalizeRoomId(roomId);
+    const room = this.rooms.get(normalizedRoomId);
+
+    return room ? [normalizedRoomId, room] : null;
   }
 }

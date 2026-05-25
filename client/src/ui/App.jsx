@@ -57,6 +57,7 @@ export function App() {
         playerSide={gameConfig.playerSide}
         botDifficulties={gameConfig.botDifficulties}
         onBackToMenu={() => setScreen(screens.MAIN)}
+        onBackToMultiplayer={() => setScreen(screens.MULTIPLAYER)}
       />
     );
   }

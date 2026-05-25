@@ -102,6 +102,11 @@ export class Game {
     this.ControllerGame.handleInvalidMultiplayerMove();
   }
 
+  stopMultiplayerSession() {
+    this._isFinished = true;
+    this.ControllerGame?.stopMultiplayerSession();
+  }
+
   endGame(result) {
     if (this._isFinished) return;
     this._isFinished = true;

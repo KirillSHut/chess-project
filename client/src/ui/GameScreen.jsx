@@ -10,13 +10,22 @@ import {
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
-export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackToMenu }) {
+export function GameScreen({
+  mode,
+  roomId,
+  playerSide,
+  botDifficulties,
+  onBackToMenu,
+  onBackToMultiplayer,
+}) {
   const pixiRootRef = useRef(null);
   const [gameResult, setGameResult] = useState(null);
   const [isBotThinking, setIsBotThinking] = useState(false);
   const [lastBotMoveMetrics, setLastBotMoveMetrics] = useState(null);
   const [multiplayerStatus, setMultiplayerStatus] = useState('Connected');
+  const [multiplayerExitReason, setMultiplayerExitReason] = useState(null);
   const [sessionId, setSessionId] = useState(0);
+  const hasLeftRoomRef = useRef(false);
 
   useEffect(() => {
     const pixiRoot = pixiRootRef.current;
@@ -25,9 +34,11 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
     let isMounted = true;
     let isPixiReady = false;
     let unsubscribeFromRoomEvents = null;
+    hasLeftRoomRef.current = false;
 
     if (mode === 'multiplayer') {
       setMultiplayerStatus('Connected');
+      setMultiplayerExitReason(null);
     }
 
     const resize = () => {
@@ -100,6 +111,16 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
             game?.handleInvalidMultiplayerMove();
             setMultiplayerStatus(message || 'Invalid move');
           },
+          onOpponentLeft: () => {
+            game?.stopMultiplayerSession();
+            setMultiplayerStatus('Opponent left the game');
+            setMultiplayerExitReason('left');
+          },
+          onOpponentDisconnected: () => {
+            game?.stopMultiplayerSession();
+            setMultiplayerStatus('Opponent disconnected');
+            setMultiplayerExitReason('disconnected');
+          },
           onRoomError: ({ code, message }) => {
             game?.handleInvalidMultiplayerMove();
             setMultiplayerStatus(
@@ -120,7 +141,10 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
       game?.dispose();
       unsubscribeFromRoomEvents?.();
       if (mode === 'multiplayer') {
-        leaveRoom();
+        if (!hasLeftRoomRef.current) {
+          leaveRoom(roomId);
+          hasLeftRoomRef.current = true;
+        }
         disconnectSocket();
       }
       setIsBotThinking(false);
@@ -137,7 +161,35 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
     setIsBotThinking(false);
     setLastBotMoveMetrics(null);
     setMultiplayerStatus('Connected');
+    setMultiplayerExitReason(null);
     setSessionId((currentSessionId) => currentSessionId + 1);
+  };
+
+  const leaveMultiplayerRoom = () => {
+    if (hasLeftRoomRef.current) return;
+
+    leaveRoom(roomId);
+    hasLeftRoomRef.current = true;
+  };
+
+  const backToMenuFromMultiplayer = () => {
+    leaveMultiplayerRoom();
+    disconnectSocket();
+    onBackToMenu();
+  };
+
+  const backToLobbyFromMultiplayer = () => {
+    leaveMultiplayerRoom();
+    onBackToMultiplayer?.();
+  };
+
+  const handleToolbarMenuClick = () => {
+    if (mode === 'multiplayer') {
+      backToMenuFromMultiplayer();
+      return;
+    }
+
+    onBackToMenu();
   };
 
   const modeLabel =
@@ -150,7 +202,11 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
   return (
     <main className="game-screen">
       <div className="game-toolbar">
-        <button className="menu-button menu-button-compact" type="button" onClick={onBackToMenu}>
+        <button
+          className="menu-button menu-button-compact"
+          type="button"
+          onClick={handleToolbarMenuClick}
+        >
           Menu
         </button>
         <span className="game-mode">{modeLabel}</span>
@@ -166,6 +222,38 @@ export function GameScreen({ mode, roomId, playerSide, botDifficulties, onBackTo
           onRestart={restartGame}
           onBackToMenu={onBackToMenu}
         />
+      )}
+      {mode === 'multiplayer' && multiplayerExitReason && (
+        <section
+          className="end-game-overlay"
+          aria-live="polite"
+          aria-labelledby="multiplayer-ended-title"
+        >
+          <div className="end-game-panel">
+            <p className="menu-kicker">Multiplayer</p>
+            <h1 id="multiplayer-ended-title">
+              {multiplayerExitReason === 'left'
+                ? 'Opponent left the game'
+                : 'Opponent disconnected'}
+            </h1>
+            <div className="end-game-actions">
+              <button
+                className="menu-button menu-button-primary"
+                type="button"
+                onClick={backToLobbyFromMultiplayer}
+              >
+                Back To Multiplayer Lobby
+              </button>
+              <button
+                className="menu-button menu-button-secondary"
+                type="button"
+                onClick={backToMenuFromMultiplayer}
+              >
+                Back To Menu
+              </button>
+            </div>
+          </div>
+        </section>
       )}
     </main>
   );

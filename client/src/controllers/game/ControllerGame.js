@@ -148,6 +148,13 @@ export class ControllerGame {
     this._isMultiplayerMovePending = false;
   }
 
+  stopMultiplayerSession() {
+    this._isFinished = true;
+    this._isMultiplayerMovePending = false;
+    this._clearSelection();
+    this._deactivateBoardInput();
+  }
+
   scheduleBotMove() {
     const activeBot = this._getBotForSide(this.currentTurn);
 

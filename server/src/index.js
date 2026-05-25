@@ -99,8 +99,12 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('leave_room', () => {
-    leaveCurrentRoom(socket);
+  socket.on('leave_room', ({ roomId } = {}) => {
+    leaveCurrentRoom(socket, {
+      notifySelf: true,
+      opponentEvent: 'opponent_left',
+      roomId,
+    });
   });
 
   socket.on('make_move', ({ roomId, fromId, toId, promotionTo } = {}) => {
@@ -182,22 +186,34 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', (reason) => {
     console.log(`Socket disconnected: ${socket.id} (${reason})`);
-    leaveCurrentRoom(socket, { notifySelf: false });
+    leaveAllRoomsForSocket(socket, {
+      opponentEvent: 'opponent_disconnected',
+    });
   });
 });
 
-function leaveCurrentRoom(socket, { notifySelf = true } = {}) {
+function leaveCurrentRoom(
+  socket,
+  { notifySelf = true, opponentEvent = 'opponent_left', roomId = null } = {},
+) {
   const previousRoomId = socket.data.roomId;
-  const leaveResult = roomManager.leaveRoom(socket.id);
+  const leaveResult = roomManager.leaveRoom(socket.id, roomId || previousRoomId);
 
-  if (previousRoomId) {
-    socket.leave(previousRoomId);
+  if (!leaveResult) {
+    if (notifySelf) {
+      socket.emit('room_error', {
+        message: 'Room not found',
+      });
+    }
+    return;
   }
 
-  socket.data.roomId = null;
-  socket.data.side = null;
+  socket.leave(leaveResult.roomId);
 
-  if (!leaveResult) return;
+  if (!previousRoomId || previousRoomId === leaveResult.roomId) {
+    socket.data.roomId = null;
+    socket.data.side = null;
+  }
 
   if (notifySelf) {
     socket.emit('room_left', {
@@ -206,13 +222,29 @@ function leaveCurrentRoom(socket, { notifySelf = true } = {}) {
   }
 
   if (leaveResult.remainingSocketId) {
-    socket.to(leaveResult.roomId).emit('room_error', {
-      code: 'opponent_disconnected',
-      message: 'Opponent disconnected',
+    socket.to(leaveResult.roomId).emit(opponentEvent, {
       roomId: leaveResult.roomId,
-      room: roomManager.getPublicRoom(leaveResult.room),
+      side: leaveResult.side,
     });
   }
+}
+
+function leaveAllRoomsForSocket(socket, { opponentEvent } = {}) {
+  let leaveResult = null;
+
+  do {
+    leaveResult = roomManager.leaveRoom(socket.id);
+
+    if (leaveResult?.remainingSocketId) {
+      socket.to(leaveResult.roomId).emit(opponentEvent, {
+        roomId: leaveResult.roomId,
+        side: leaveResult.side,
+      });
+    }
+  } while (leaveResult);
+
+  socket.data.roomId = null;
+  socket.data.side = null;
 }
 
 httpServer.listen(PORT, () => {
