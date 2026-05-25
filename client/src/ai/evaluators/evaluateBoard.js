@@ -1,7 +1,7 @@
 import { PIECE_VALUES } from '../constants/pieceValues.js';
 import { PIECE_SQUARE_TABLES } from '../constants/pieceSquareTables.js';
 import { getLegalMoves } from '../utils/getLegalMoves.js';
-import { eChessFigure } from '../../enums/eChessFigure.js';
+import { eChessFigure } from '../../../../shared/chess/enums/eChessFigure.js';
 
 const MOBILITY_WEIGHT = 5;
 const CHECK_PENALTY = 50;

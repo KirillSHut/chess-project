@@ -1,5 +1,14 @@
 # Shared
 
-Placeholder for future code shared by the client and server.
+Shared code intended to be reused by both the browser client and the future multiplayer server.
 
-`ChessEngine` is intentionally still in `client/src/models/ChessEngine.js` after the monorepo migration. Moving it into `shared/chess/` is a good next step, but it should be handled separately with focused verification so the working client game is not destabilized.
+## Chess
+
+`shared/chess/` contains pure chess-rule logic:
+
+- `ChessEngine.js`
+- board cell configuration
+- figure move configuration
+- chess figure enum values
+
+This layer must stay independent from React, PixiJS, DOM APIs, client controllers, AI bots, and server transport code.

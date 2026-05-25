@@ -45,7 +45,7 @@ Related project docs:
 
 ## Model: `ChessEngine`
 
-`client/src/models/ChessEngine.js` stores the logical board state and owns chess rules.
+`shared/chess/ChessEngine.js` stores the logical board state and owns chess rules.
 
 It currently handles:
 

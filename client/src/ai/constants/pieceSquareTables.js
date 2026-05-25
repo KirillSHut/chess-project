@@ -1,4 +1,4 @@
-import { eChessFigure } from '../../enums/eChessFigure.js';
+import { eChessFigure } from '../../../../shared/chess/enums/eChessFigure.js';
 
 export const PIECE_SQUARE_TABLES = {
   [eChessFigure.PAWN]: [

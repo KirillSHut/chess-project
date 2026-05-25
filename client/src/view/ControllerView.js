@@ -1,5 +1,5 @@
 import { Container } from 'pixi.js';
-import { chessCells } from '../configs/chessCells.js';
+import { chessCells } from '../../../shared/chess/configs/chessCells.js';
 import { CellContainer } from '../controllers/components/Cell.js';
 import { BaseFigure } from '../controllers/components/figures/BaseFigure.js';
 

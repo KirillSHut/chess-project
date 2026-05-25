@@ -1,7 +1,7 @@
 import { GreedyBot } from '../../ai/GreedyBot.js';
 import { MinimaxBot } from '../../ai/MinimaxBot.js';
 import { RandomBot } from '../../ai/RandomBot.js';
-import { ChessEngine } from '../../models/ChessEngine.js';
+import { ChessEngine } from '../../../../shared/chess/ChessEngine.js';
 import { ControllerView } from '../../view/ControllerView.js';
 
 const BOT_THINK_DELAY_MS = 300;

@@ -10,7 +10,7 @@ This project is a local browser chess game built with JavaScript ES modules, Rea
 4. `client/src/Game.js` loads assets and owns the top-level chess game lifecycle.
 5. `client/src/controllers/game/ControllerGame.js` creates and coordinates the model and view.
 6. `client/src/ai` chooses bot moves from engine-generated legal moves.
-7. `client/src/models/ChessEngine.js` stores board state and validates chess rules.
+7. `shared/chess/ChessEngine.js` stores board state and validates chess rules.
 8. `client/src/view/ControllerView.js` renders board cells and pieces with PixiJS.
 9. Pixi components emit pointer callbacks back into the controller.
 
@@ -42,7 +42,7 @@ Must not own:
 
 ### Model
 
-`client/src/models/ChessEngine.js`
+`shared/chess/ChessEngine.js`
 
 Owns:
 

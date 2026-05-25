@@ -1,6 +1,6 @@
-import { chessCells } from '../configs/chessCells.js';
-import { eChessFigure } from '../enums/eChessFigure.js';
-import { figureMoveConfig } from '../configs/figureMoveConfig.js';
+import { chessCells } from './configs/chessCells.js';
+import { eChessFigure } from './enums/eChessFigure.js';
+import { figureMoveConfig } from './configs/figureMoveConfig.js';
 
 /**
  * ChessEngine stores the complete logical state of the chess board.

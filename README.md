@@ -15,7 +15,8 @@ server/
   README.md     Placeholder for future multiplayer server work
 
 shared/
-  README.md     Placeholder for future shared chess/domain code
+  chess/        Reusable chess rules and board configuration
+  README.md
 
 docsMD/         Project architecture notes, devlog, and roadmap
 docs/           Generated client build output
@@ -54,10 +55,10 @@ The project is now arranged as a simple multiplayer-ready monorepo shape:
 
 - `client/` contains the existing playable React/PixiJS chess app.
 - `server/` is reserved for a future multiplayer backend.
-- `shared/` is reserved for code that must be used by both client and server.
+- `shared/chess/` contains reusable chess rules and board configuration for both the client and future server.
 
 No multiplayer server is implemented yet. The current local game modes and AI systems remain client-side.
 
-## Shared Chess Follow-Up
+## Shared Chess
 
-`ChessEngine` still lives in `client/src/models/ChessEngine.js` for this migration. Moving it into `shared/chess/` should be done as a separate step with focused verification around imports, engine state cloning, move simulation, and AI evaluation.
+`shared/chess/ChessEngine.js` is the source of truth for chess rules, move validation, move application, cloning, and simulation. Client rendering, React UI, and AI bots import it but do not live in the shared layer.

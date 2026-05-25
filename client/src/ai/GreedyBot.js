@@ -1,4 +1,4 @@
-import { eChessFigure } from '../enums/eChessFigure.js';
+import { eChessFigure } from '../../../shared/chess/enums/eChessFigure.js';
 import { PIECE_VALUES } from './constants/pieceValues.js';
 import { getLegalMoves } from './utils/getLegalMoves.js';
 
