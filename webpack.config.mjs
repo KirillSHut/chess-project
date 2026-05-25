@@ -79,7 +79,7 @@ export default (_env, argv) => {
 
       // Make an index.html from the template
       new HtmlWebpackPlugin({
-        template: './index.ejs',
+        template: './index.html',
         hash: true,
         minify: false,
       }),
