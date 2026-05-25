@@ -3,6 +3,7 @@ import { AiVsAiSetupMenu } from './AiVsAiSetupMenu.jsx';
 import { BotDifficultyMenu } from './BotDifficultyMenu.jsx';
 import { GameScreen } from './GameScreen.jsx';
 import { MainMenu } from './MainMenu.jsx';
+import { MultiplayerScreen } from './MultiplayerScreen.jsx';
 
 const screens = {
   MAIN: 'main',
@@ -76,21 +77,7 @@ export function App() {
       )}
 
       {screen === screens.MULTIPLAYER && (
-        <section className="menu-panel" aria-labelledby="multiplayer-title">
-          <p className="menu-kicker">Multiplayer</p>
-          <h1 id="multiplayer-title">Coming soon</h1>
-          <p className="menu-copy">
-            Online play will arrive as a separate feature so the local chess foundation can stay
-            stable.
-          </p>
-          <button
-            className="menu-button menu-button-secondary"
-            type="button"
-            onClick={() => setScreen(screens.MAIN)}
-          >
-            Back to menu
-          </button>
-        </section>
+        <MultiplayerScreen onBack={() => setScreen(screens.MAIN)} />
       )}
     </main>
   );

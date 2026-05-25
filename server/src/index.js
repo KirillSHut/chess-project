@@ -5,7 +5,12 @@ import { Server } from 'socket.io';
 
 const PORT = process.env.PORT || 4000;
 
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'http://localhost:5143',
+];
 
 const app = express();
 const httpServer = http.createServer(app);

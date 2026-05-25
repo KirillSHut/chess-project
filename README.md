@@ -83,6 +83,24 @@ npm run dev
 
 The server exposes `GET /health` and accepts basic Socket.IO connections.
 
+## Multiplayer Client Connection
+
+The client has a small Socket.IO service at `client/src/services/socketService.js`.
+
+By default it connects to:
+
+```text
+http://localhost:4000
+```
+
+Override the server URL for the client build with:
+
+```bash
+SOCKET_URL=http://localhost:4000 npm run client:dev
+```
+
+The client connects only when the multiplayer placeholder screen is opened and disconnects when leaving that screen.
+
 ## Shared Chess
 
 `shared/chess/ChessEngine.js` is the source of truth for chess rules, move validation, move application, cloning, and simulation. Client rendering, React UI, and AI bots import it but do not live in the shared layer.

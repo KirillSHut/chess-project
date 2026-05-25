@@ -3,6 +3,7 @@ import path from 'path';
 import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
+import webpack from 'webpack';
 
 export default (_env, argv) => {
   return {
@@ -82,6 +83,10 @@ export default (_env, argv) => {
         template: './client/index.html',
         hash: true,
         minify: false,
+      }),
+
+      new webpack.DefinePlugin({
+        'process.env.SOCKET_URL': JSON.stringify(process.env.SOCKET_URL || ''),
       }),
     ],
   };
