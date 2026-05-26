@@ -11,6 +11,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:8080',
   'http://localhost:5143',
+  'https://kirillshut.github.io'
 ];
 
 const app = express();
@@ -58,9 +59,9 @@ io.on('connection', (socket) => {
       if (
         socket.data.roomId &&
         socket.data.roomId !==
-          String(roomId || '')
-            .trim()
-            .toUpperCase()
+        String(roomId || '')
+          .trim()
+          .toUpperCase()
       ) {
         leaveCurrentRoom(socket, { notifySelf: false });
       }
@@ -274,6 +275,6 @@ function createGameState(room) {
   };
 }
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Multiplayer server listening on port ${PORT}`);
 });

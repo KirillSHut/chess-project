@@ -4,8 +4,7 @@ import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import webpack from 'webpack';
-
-const dotenv = require('dotenv');
+import dotenv from 'dotenv'
 
 const env = dotenv.config().parsed || {};
 
