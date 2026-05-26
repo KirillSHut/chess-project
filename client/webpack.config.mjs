@@ -5,6 +5,10 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import webpack from 'webpack';
 
+const dotenv = require('dotenv');
+
+const env = dotenv.config().parsed || {};
+
 export default (_env, argv) => {
   return {
     stats: 'minimal', // Keep console output easy to read.
@@ -76,6 +80,10 @@ export default (_env, argv) => {
       // Copy our static assets to the final build
       new CopyPlugin({
         patterns: [{ from: 'client/public/' }],
+      }),
+
+      new webpack.DefinePlugin({
+        'process.env.SOCKET_URL': JSON.stringify(env.SOCKET_URL),
       }),
 
       // Make an index.html from the template
