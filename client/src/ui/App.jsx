@@ -4,6 +4,10 @@ import { BotDifficultyMenu } from './BotDifficultyMenu.jsx';
 import { GameScreen } from './GameScreen.jsx';
 import { MainMenu } from './MainMenu.jsx';
 import { MultiplayerScreen } from './MultiplayerScreen.jsx';
+import {
+  clearLocalBotGameSession,
+  getLocalBotGameSession,
+} from '../services/localBotGameSessionStorage.js';
 
 const screens = {
   MAIN: 'main',
@@ -24,13 +28,40 @@ const localBotGame = {
 export function App() {
   const [screen, setScreen] = useState(screens.MAIN);
   const [gameConfig, setGameConfig] = useState(null);
+  const [savedBotGame, setSavedBotGame] = useState(() => getLocalBotGameSession());
+
+  const returnToMainMenu = () => {
+    setSavedBotGame(getLocalBotGameSession());
+    setScreen(screens.MAIN);
+  };
 
   const startBotGame = (selectedDifficulty) => {
+    clearLocalBotGameSession();
+    setSavedBotGame(null);
     setGameConfig({
       ...localBotGame,
       botDifficulties: {
         black: selectedDifficulty,
       },
+    });
+    setScreen(screens.GAME);
+  };
+
+  const continueBotGame = () => {
+    const session = getLocalBotGameSession();
+    if (!session) {
+      setSavedBotGame(null);
+      return;
+    }
+
+    setGameConfig({
+      mode: 'human-vs-bot',
+      playerSide: session.playerSide,
+      botSide: session.botSide,
+      botDifficulties: session.botDifficulties || {
+        [session.botSide]: session.botDifficulty,
+      },
+      initialState: session.engineSnapshot,
     });
     setScreen(screens.GAME);
   };
@@ -57,7 +88,7 @@ export function App() {
         playerSide={gameConfig.playerSide}
         initialState={gameConfig.initialState}
         botDifficulties={gameConfig.botDifficulties}
-        onBackToMenu={() => setScreen(screens.MAIN)}
+        onBackToMenu={returnToMainMenu}
         onBackToMultiplayer={() => setScreen(screens.MULTIPLAYER)}
       />
     );
@@ -67,6 +98,8 @@ export function App() {
     <main className="app-shell">
       {screen === screens.MAIN && (
         <MainMenu
+          hasSavedBotGame={Boolean(savedBotGame)}
+          onContinueBotGame={continueBotGame}
           onPlayVsBot={() => setScreen(screens.BOT_DIFFICULTY)}
           onAiVsAi={() => setScreen(screens.AI_VS_AI_SETUP)}
           onMultiplayer={() => setScreen(screens.MULTIPLAYER)}

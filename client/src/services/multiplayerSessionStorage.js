@@ -3,7 +3,7 @@ const MULTIPLAYER_SESSION_KEY = 'multiplayerSession';
 export function saveMultiplayerSession({ roomId, playerSide }) {
   if (!roomId || !playerSide) return;
 
-  window.localStorage.setItem(
+  getStorage()?.setItem(
     MULTIPLAYER_SESSION_KEY,
     JSON.stringify({
       roomId,
@@ -14,7 +14,10 @@ export function saveMultiplayerSession({ roomId, playerSide }) {
 
 export function getMultiplayerSession() {
   try {
-    const rawSession = window.localStorage.getItem(MULTIPLAYER_SESSION_KEY);
+    const storage = getStorage();
+    if (!storage) return null;
+
+    const rawSession = storage.getItem(MULTIPLAYER_SESSION_KEY);
     if (!rawSession) return null;
 
     const session = JSON.parse(rawSession);
@@ -34,5 +37,13 @@ export function getMultiplayerSession() {
 }
 
 export function clearMultiplayerSession() {
-  window.localStorage.removeItem(MULTIPLAYER_SESSION_KEY);
+  getStorage()?.removeItem(MULTIPLAYER_SESSION_KEY);
+}
+
+function getStorage() {
+  try {
+    return window.localStorage || null;
+  } catch {
+    return null;
+  }
 }

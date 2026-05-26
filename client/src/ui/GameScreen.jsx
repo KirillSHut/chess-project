@@ -8,6 +8,10 @@ import {
   subscribeToRoomEvents,
 } from '../services/socketService.js';
 import { clearMultiplayerSession } from '../services/multiplayerSessionStorage.js';
+import {
+  clearLocalBotGameSession,
+  saveLocalBotGameSession,
+} from '../services/localBotGameSessionStorage.js';
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
@@ -31,7 +35,18 @@ export function GameScreen({
   const [multiplayerStatus, setMultiplayerStatus] = useState('Connected');
   const [multiplayerExitReason, setMultiplayerExitReason] = useState(null);
   const [sessionId, setSessionId] = useState(0);
+  const [gameInitialState, setGameInitialState] = useState(initialState);
   const hasLeftRoomRef = useRef(false);
+
+  const handleGameEnd = (result) => {
+    if (mode === 'human-vs-bot') {
+      clearLocalBotGameSession();
+    } else if (mode === 'multiplayer') {
+      clearMultiplayerSession();
+    }
+
+    setGameResult(result);
+  };
 
   useEffect(() => {
     const pixiRoot = pixiRootRef.current;
@@ -82,11 +97,12 @@ export function GameScreen({
         mode,
         botDifficulties,
         playerSide,
-        initialState,
+        initialState: gameInitialState,
         botEnabled: mode !== 'multiplayer',
-        onGameEnd: setGameResult,
+        onGameEnd: handleGameEnd,
         onBotThinkingChange: setIsBotThinking,
         onBotMoveMetrics: setLastBotMoveMetrics,
+        onLocalBotGameChange: saveLocalBotGameSession,
         onMultiplayerMove: ({ fromId, toId, promotionTo }) => {
           if (mode !== 'multiplayer') return;
 
@@ -190,7 +206,7 @@ export function GameScreen({
         app.destroy(true);
       }
     };
-  }, [botDifficulties, initialState, mode, playerSide, roomId, sessionId]);
+  }, [botDifficulties, gameInitialState, mode, playerSide, roomId, sessionId]);
 
   const restartGame = () => {
     setGameResult(null);
@@ -198,6 +214,10 @@ export function GameScreen({
     setLastBotMoveMetrics(null);
     setMultiplayerStatus('Connected');
     setMultiplayerExitReason(null);
+    if (mode === 'human-vs-bot') {
+      clearLocalBotGameSession();
+      setGameInitialState(null);
+    }
     setSessionId((currentSessionId) => currentSessionId + 1);
   };
 
@@ -224,6 +244,10 @@ export function GameScreen({
     if (mode === 'multiplayer') {
       backToMenuFromMultiplayer();
       return;
+    }
+
+    if (mode === 'human-vs-bot') {
+      clearLocalBotGameSession();
     }
 
     onBackToMenu();

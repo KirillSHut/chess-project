@@ -17,6 +17,7 @@ export class Game {
       onBotThinkingChange = () => {},
       onBotMoveMetrics = () => {},
       onMultiplayerMove = () => {},
+      onLocalBotGameChange = () => {},
     } = {},
   ) {
     this.app = app;
@@ -32,6 +33,7 @@ export class Game {
     this.onBotThinkingChange = onBotThinkingChange;
     this.onBotMoveMetrics = onBotMoveMetrics;
     this.onMultiplayerMove = onMultiplayerMove;
+    this.onLocalBotGameChange = onLocalBotGameChange;
 
     this._isStarted = false;
     this._isFinished = false;
@@ -55,6 +57,7 @@ export class Game {
     this.ControllerGame.onBotThinkingChange = this.onBotThinkingChange;
     this.ControllerGame.onBotMoveMetrics = this.onBotMoveMetrics;
     this.ControllerGame.onMultiplayerMove = this.onMultiplayerMove;
+    this.ControllerGame.onLocalBotGameChange = this.onLocalBotGameChange;
 
     this.startGame();
   }

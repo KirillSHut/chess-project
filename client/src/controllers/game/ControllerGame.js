@@ -61,6 +61,7 @@ export class ControllerGame {
     this.onBotThinkingChange = () => {};
     this.onBotMoveMetrics = () => {};
     this.onMultiplayerMove = () => {};
+    this.onLocalBotGameChange = () => {};
   }
 
   init() {
@@ -95,6 +96,12 @@ export class ControllerGame {
     if (this.mode === 'ai-vs-ai') {
       this._deactivateBoardInput();
       this.scheduleBotMove();
+    } else if (this.mode === 'human-vs-bot') {
+      this._emitLocalBotGameChange();
+
+      if (this._isBotSide(this.currentTurn)) {
+        this.scheduleBotMove();
+      }
     }
   }
 
@@ -137,6 +144,7 @@ export class ControllerGame {
     this._clearSelection();
     this._syncViewWithModel();
     this._handlePostMove(side, result.status);
+    this._emitLocalBotGameChange();
 
     return result;
   }
@@ -457,6 +465,21 @@ export class ControllerGame {
     this.lastBotMoveMetrics = metrics;
     this.botMoveMetrics.push(metrics);
     this.onBotMoveMetrics(metrics);
+  }
+
+  _emitLocalBotGameChange() {
+    if (this.mode !== 'human-vs-bot' || !this.ChessEngine || this._isFinished) return;
+
+    this.onLocalBotGameChange({
+      mode: this.mode,
+      playerSide: this.playerSide,
+      botSide: this.botSide,
+      botDifficulty: this.botDifficulties[this.botSide],
+      botDifficulties: { ...this.botDifficulties },
+      currentTurn: this.currentTurn,
+      status: 'active',
+      engineSnapshot: this.ChessEngine.toSnapshot(),
+    });
   }
 
   _getTimeMs() {
