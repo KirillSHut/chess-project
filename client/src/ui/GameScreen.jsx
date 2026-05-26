@@ -10,6 +10,10 @@ import {
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
+const BOARD_WORLD_CENTER_X = 1170;
+const BOARD_WORLD_CENTER_Y = 540;
+const BOARD_WORLD_SIZE = 870;
+
 export function GameScreen({
   mode,
   roomId,
@@ -34,6 +38,7 @@ export function GameScreen({
     let game = null;
     let isMounted = true;
     let isPixiReady = false;
+    let resizeObserver = null;
     let unsubscribeFromRoomEvents = null;
     hasLeftRoomRef.current = false;
 
@@ -43,17 +48,26 @@ export function GameScreen({
     }
 
     const resize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const scale = Math.min(w / 2340, h / 1080);
+      if (!pixiRoot || !isPixiReady) return;
 
+      const { width, height } = pixiRoot.getBoundingClientRect();
+      const rendererWidth = Math.max(1, Math.floor(width));
+      const rendererHeight = Math.max(1, Math.floor(height));
+      const scale = Math.min(rendererWidth / BOARD_WORLD_SIZE, rendererHeight / BOARD_WORLD_SIZE);
+
+      app.renderer.resize(rendererWidth, rendererHeight);
       app.stage.scale.set(scale);
-      app.stage.x = (w - 2340 * scale) / 2;
-      app.stage.y = (h - 1080 * scale) / 2;
+      app.stage.x = rendererWidth / 2 - BOARD_WORLD_CENTER_X * scale;
+      app.stage.y = rendererHeight / 2 - BOARD_WORLD_CENTER_Y * scale;
     };
 
     const bootGame = async () => {
-      await app.init({ background: '#1099bb', resizeTo: window });
+      await app.init({
+        antialias: true,
+        background: '#10110f',
+        height: 1,
+        width: 1,
+      });
       isPixiReady = true;
 
       if (!isMounted || !pixiRoot) {
@@ -132,7 +146,13 @@ export function GameScreen({
         });
       }
 
+      if (window.ResizeObserver) {
+        resizeObserver = new window.ResizeObserver(resize);
+        resizeObserver.observe(pixiRoot);
+      }
+
       window.addEventListener('resize', resize);
+      window.addEventListener('orientationchange', resize);
       resize();
     };
 
@@ -151,7 +171,9 @@ export function GameScreen({
       }
       setIsBotThinking(false);
       setLastBotMoveMetrics(null);
+      resizeObserver?.disconnect();
       window.removeEventListener('resize', resize);
+      window.removeEventListener('orientationchange', resize);
       if (isPixiReady) {
         app.destroy(true);
       }
@@ -203,20 +225,28 @@ export function GameScreen({
 
   return (
     <main className="game-screen">
-      <div className="game-toolbar">
-        <button
-          className="menu-button menu-button-compact"
-          type="button"
-          onClick={handleToolbarMenuClick}
-        >
-          Menu
-        </button>
-        <span className="game-mode">{modeLabel}</span>
-        {mode === 'multiplayer' && <span className="game-mode">{multiplayerStatus}</span>}
-        {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
-      </div>
-      {mode !== 'multiplayer' && <AiMetricsPanel metrics={lastBotMoveMetrics} />}
-      <div className="pixi-stage" ref={pixiRootRef} />
+      <section className="game-layout" aria-label="Chess board">
+        <div className="game-board-area">
+          <div className="pixi-stage" ref={pixiRootRef} />
+        </div>
+
+        <aside className="game-side-panel" aria-label="Game controls and status">
+          <div className="game-toolbar">
+            <button
+              className="menu-button menu-button-compact"
+              type="button"
+              onClick={handleToolbarMenuClick}
+            >
+              Menu
+            </button>
+            <span className="game-mode">{modeLabel}</span>
+            {mode === 'multiplayer' && <span className="game-mode">{multiplayerStatus}</span>}
+            {isBotThinking && <span className="thinking-status">Bot is thinking...</span>}
+          </div>
+
+          {mode !== 'multiplayer' && <AiMetricsPanel metrics={lastBotMoveMetrics} />}
+        </aside>
+      </section>
       {gameResult && (
         <EndGameOverlay
           result={gameResult}
