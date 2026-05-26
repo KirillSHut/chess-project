@@ -198,6 +198,20 @@ export class ControllerGame {
     this._deactivateBoardInput();
   }
 
+  setMultiplayerPaused(isPaused) {
+    if (this.mode !== 'multiplayer' || this._isFinished) return;
+
+    this._isMultiplayerMovePending = isPaused;
+    this._clearSelection();
+
+    if (isPaused) {
+      this._deactivateBoardInput();
+      return;
+    }
+
+    this._syncViewWithModel();
+  }
+
   scheduleBotMove() {
     const activeBot = this._getBotForSide(this.currentTurn);
 

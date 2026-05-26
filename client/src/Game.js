@@ -114,6 +114,10 @@ export class Game {
     this.ControllerGame?.stopMultiplayerSession();
   }
 
+  setMultiplayerPaused(isPaused) {
+    this.ControllerGame?.setMultiplayerPaused(isPaused);
+  }
+
   endGame(result) {
     if (this._isFinished) return;
     this._isFinished = true;

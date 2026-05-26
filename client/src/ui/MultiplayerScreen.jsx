@@ -5,8 +5,14 @@ import {
   disconnectSocket,
   joinRoom,
   leaveRoom,
+  rejoinRoom,
   subscribeToRoomEvents,
 } from '../services/socketService.js';
+import {
+  clearMultiplayerSession,
+  getMultiplayerSession,
+  saveMultiplayerSession,
+} from '../services/multiplayerSessionStorage.js';
 
 const connectionLabels = {
   disconnected: 'Disconnected',
@@ -22,6 +28,7 @@ export function MultiplayerScreen({ onBack, onGameStart }) {
   const [playerSide, setPlayerSide] = useState(null);
   const [roomStatus, setRoomStatus] = useState('No room');
   const [roomError, setRoomError] = useState('');
+  const [savedSession, setSavedSession] = useState(() => getMultiplayerSession());
   const isStartingGameRef = useRef(false);
 
   const resetRoomState = () => {
@@ -69,15 +76,36 @@ export function MultiplayerScreen({ onBack, onGameStart }) {
       onRoomError: ({ code, message }) => {
         setRoomError(message || 'Room error');
         setRoomStatus(code === 'opponent_disconnected' ? 'Opponent disconnected' : 'Error');
+        if (
+          code === 'rejoin_failed' &&
+          (message === 'Room not found' || message === 'Game is not active')
+        ) {
+          clearMultiplayerSession();
+          setSavedSession(null);
+        }
       },
       onGameStarted: ({ roomId: startedRoomId, playerSide: assignedSide, players, gameState }) => {
         const side = assignedSide || (players?.white === socket.id ? 'white' : 'black');
         isStartingGameRef.current = true;
+        saveMultiplayerSession({ roomId: startedRoomId, playerSide: side });
 
         onGameStart({
           mode: 'multiplayer',
           roomId: startedRoomId,
           playerSide: side,
+          opponentConnected: true,
+          initialState: gameState,
+          botDifficulties: {},
+        });
+      },
+      onRoomRejoined: ({ roomId: rejoinedRoomId, playerSide: rejoinedSide, gameState }) => {
+        isStartingGameRef.current = true;
+        saveMultiplayerSession({ roomId: rejoinedRoomId, playerSide: rejoinedSide });
+
+        onGameStart({
+          mode: 'multiplayer',
+          roomId: rejoinedRoomId,
+          playerSide: rejoinedSide,
           opponentConnected: true,
           initialState: gameState,
           botDifficulties: {},
@@ -122,6 +150,22 @@ export function MultiplayerScreen({ onBack, onGameStart }) {
     leaveRoom();
   };
 
+  const handleReconnect = () => {
+    if (connectionStatus !== 'connected' || !savedSession) return;
+
+    setRoomError('');
+    setRoomStatus('Reconnecting');
+    rejoinRoom({
+      roomId: savedSession.roomId,
+      side: savedSession.playerSide,
+    });
+  };
+
+  const clearSavedReconnect = () => {
+    clearMultiplayerSession();
+    setSavedSession(null);
+  };
+
   const hasRoom = Boolean(roomId);
 
   return (
@@ -136,6 +180,25 @@ export function MultiplayerScreen({ onBack, onGameStart }) {
         <span>Server</span>
         <strong>{connectionLabels[connectionStatus]}</strong>
       </div>
+
+      {savedSession && (
+        <div className="reconnect-panel">
+          <p>
+            Previous game: Room {savedSession.roomId}, {formatSide(savedSession.playerSide)}
+          </p>
+          <button
+            className="menu-button menu-button-primary"
+            type="button"
+            disabled={connectionStatus !== 'connected' || hasRoom}
+            onClick={handleReconnect}
+          >
+            Reconnect to previous game
+          </button>
+          <button className="menu-button" type="button" onClick={clearSavedReconnect}>
+            Forget saved game
+          </button>
+        </div>
+      )}
 
       <div className="multiplayer-room-panel">
         <button

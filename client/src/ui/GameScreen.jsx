@@ -7,6 +7,7 @@ import {
   sendMove,
   subscribeToRoomEvents,
 } from '../services/socketService.js';
+import { clearMultiplayerSession } from '../services/multiplayerSessionStorage.js';
 import { AiMetricsPanel } from './AiMetricsPanel.jsx';
 import { EndGameOverlay } from './EndGameOverlay.jsx';
 
@@ -122,6 +123,9 @@ export function GameScreen({
                 ? 'Game over'
                 : 'Connected',
             );
+            if (move.status === 'checkmate' || move.status === 'stalemate') {
+              clearMultiplayerSession();
+            }
           },
           onInvalidMove: ({ message }) => {
             game?.handleInvalidMultiplayerMove();
@@ -131,11 +135,23 @@ export function GameScreen({
             game?.stopMultiplayerSession();
             setMultiplayerStatus('Opponent left the game');
             setMultiplayerExitReason('left');
+            clearMultiplayerSession();
           },
           onOpponentDisconnected: () => {
+            game?.setMultiplayerPaused(true);
+            setMultiplayerStatus('Opponent disconnected. Waiting for reconnect...');
+            setMultiplayerExitReason(null);
+          },
+          onOpponentReconnected: () => {
+            game?.setMultiplayerPaused(false);
+            setMultiplayerStatus('Connected');
+            setMultiplayerExitReason(null);
+          },
+          onRoomClosed: () => {
             game?.stopMultiplayerSession();
-            setMultiplayerStatus('Opponent disconnected');
-            setMultiplayerExitReason('disconnected');
+            setMultiplayerStatus('Room closed');
+            setMultiplayerExitReason('closed');
+            clearMultiplayerSession();
           },
           onRoomError: ({ code, message }) => {
             game?.handleInvalidMultiplayerMove();
@@ -163,10 +179,6 @@ export function GameScreen({
       game?.dispose();
       unsubscribeFromRoomEvents?.();
       if (mode === 'multiplayer') {
-        if (!hasLeftRoomRef.current) {
-          leaveRoom(roomId);
-          hasLeftRoomRef.current = true;
-        }
         disconnectSocket();
       }
       setIsBotThinking(false);
@@ -193,6 +205,7 @@ export function GameScreen({
     if (hasLeftRoomRef.current) return;
 
     leaveRoom(roomId);
+    clearMultiplayerSession();
     hasLeftRoomRef.current = true;
   };
 
@@ -252,7 +265,7 @@ export function GameScreen({
           result={gameResult}
           viewerSide={playerSide}
           onRestart={restartGame}
-          onBackToMenu={onBackToMenu}
+          onBackToMenu={mode === 'multiplayer' ? backToMenuFromMultiplayer : onBackToMenu}
         />
       )}
       {mode === 'multiplayer' && multiplayerExitReason && (
@@ -264,9 +277,7 @@ export function GameScreen({
           <div className="end-game-panel">
             <p className="menu-kicker">Multiplayer</p>
             <h1 id="multiplayer-ended-title">
-              {multiplayerExitReason === 'left'
-                ? 'Opponent left the game'
-                : 'Opponent disconnected'}
+              {multiplayerExitReason === 'left' ? 'Opponent left the game' : 'Room closed'}
             </h1>
             <div className="end-game-actions">
               <button

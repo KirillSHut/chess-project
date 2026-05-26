@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import { RoomManager } from './rooms/RoomManager.js';
 
 const PORT = process.env.PORT || 4000;
+const RECONNECT_GRACE_MS = 60_000;
 
 const allowedOrigins = [
   'http://localhost:3000',
@@ -17,6 +18,7 @@ const allowedOrigins = [
 const app = express();
 const httpServer = http.createServer(app);
 const roomManager = new RoomManager();
+const reconnectTimers = new Map();
 const corsOptions = {
   origin: allowedOrigins,
 };
@@ -88,6 +90,37 @@ io.on('connection', (socket) => {
       }
     } catch (error) {
       socket.emit('room_error', {
+        message: error.message,
+      });
+    }
+  });
+
+  socket.on('rejoin_room', ({ roomId, side } = {}) => {
+    try {
+      leaveCurrentRoom(socket, { notifySelf: false });
+
+      const { room, side: playerSide } = roomManager.rejoinRoom(socket.id, roomId, side);
+
+      cancelReconnectTimer(room.id, playerSide);
+
+      socket.data.roomId = room.id;
+      socket.data.side = playerSide;
+      socket.join(room.id);
+
+      socket.emit('room_rejoined', {
+        roomId: room.id,
+        playerSide,
+        room: roomManager.getPublicRoom(room),
+        gameState: createGameState(room),
+      });
+
+      socket.to(room.id).emit('opponent_reconnected', {
+        roomId: room.id,
+        side: playerSide,
+      });
+    } catch (error) {
+      socket.emit('room_error', {
+        code: 'rejoin_failed',
         message: error.message,
       });
     }
@@ -222,24 +255,83 @@ function leaveCurrentRoom(
       side: leaveResult.side,
     });
   }
+
+  cancelReconnectTimer(leaveResult.roomId, leaveResult.side);
+
+  if (!leaveResult.room) {
+    cancelReconnectTimersForRoom(leaveResult.roomId);
+  }
 }
 
 function leaveAllRoomsForSocket(socket, { opponentEvent } = {}) {
-  let leaveResult = null;
+  let disconnectResult = null;
 
   do {
-    leaveResult = roomManager.leaveRoom(socket.id);
+    disconnectResult = roomManager.disconnectPlayer(socket.id);
 
-    if (leaveResult?.remainingSocketId) {
-      socket.to(leaveResult.roomId).emit(opponentEvent, {
-        roomId: leaveResult.roomId,
-        side: leaveResult.side,
+    if (disconnectResult?.remainingSocketId) {
+      socket.to(disconnectResult.roomId).emit(opponentEvent, {
+        roomId: disconnectResult.roomId,
+        side: disconnectResult.side,
       });
     }
-  } while (leaveResult);
+
+    if (disconnectResult?.reconnectable) {
+      scheduleReconnectCleanup(disconnectResult.roomId, disconnectResult.side);
+    } else if (disconnectResult) {
+      cancelReconnectTimer(disconnectResult.roomId, disconnectResult.side);
+      if (!disconnectResult.room) {
+        cancelReconnectTimersForRoom(disconnectResult.roomId);
+      }
+    }
+  } while (disconnectResult);
 
   socket.data.roomId = null;
   socket.data.side = null;
+}
+
+function scheduleReconnectCleanup(roomId, side) {
+  const timerKey = getReconnectTimerKey(roomId, side);
+  clearTimeout(reconnectTimers.get(timerKey));
+
+  const timerId = setTimeout(() => {
+    reconnectTimers.delete(timerKey);
+
+    const room = roomManager.getRoomById(roomId);
+    if (!room?.disconnected?.[side]) return;
+
+    const closeResult = roomManager.closeRoom(roomId);
+    if (!closeResult) return;
+
+    closeResult.connectedSocketIds.forEach((socketId) => {
+      io.to(socketId).emit('room_closed', {
+        roomId: closeResult.roomId,
+        side,
+        reason: 'reconnect_timeout',
+      });
+    });
+
+    cancelReconnectTimersForRoom(roomId);
+  }, RECONNECT_GRACE_MS);
+
+  reconnectTimers.set(timerKey, timerId);
+}
+
+function cancelReconnectTimer(roomId, side) {
+  const timerKey = getReconnectTimerKey(roomId, side);
+  const timerId = reconnectTimers.get(timerKey);
+  if (!timerId) return;
+
+  clearTimeout(timerId);
+  reconnectTimers.delete(timerKey);
+}
+
+function cancelReconnectTimersForRoom(roomId) {
+  ['white', 'black'].forEach((side) => cancelReconnectTimer(roomId, side));
+}
+
+function getReconnectTimerKey(roomId, side) {
+  return `${roomId}:${side}`;
 }
 
 function emitGameStarted(room) {

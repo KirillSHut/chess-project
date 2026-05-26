@@ -16,6 +16,10 @@ export class RoomManager {
         white: socketId,
         black: null,
       },
+      disconnected: {
+        white: false,
+        black: false,
+      },
       engine: new ChessEngine(),
       status: 'waiting',
     };
@@ -59,7 +63,7 @@ export class RoomManager {
       throw new Error('Room is full');
     }
 
-    if (!room.players.white) {
+    if (!room.players.white && !room.disconnected.white) {
       room.players.white = socketId;
       room.status = room.players.black ? 'ready' : 'waiting';
 
@@ -70,6 +74,7 @@ export class RoomManager {
     }
 
     room.players.black = socketId;
+    room.disconnected.black = false;
     room.status = 'playing';
 
     return {
@@ -83,10 +88,12 @@ export class RoomManager {
     if (!roomEntry) return null;
 
     const [resolvedRoomId, room] = roomEntry;
-    const side = room.players.white === socketId ? 'white' : 'black';
+    const side =
+      room.players.white === socketId ? 'white' : room.players.black === socketId ? 'black' : null;
     if (!side) return null;
 
     room.players[side] = null;
+    room.disconnected[side] = false;
 
     const remainingSide = room.players.white ? 'white' : room.players.black ? 'black' : null;
     const remainingSocketId = remainingSide ? room.players[remainingSide] : null;
@@ -111,6 +118,80 @@ export class RoomManager {
     };
   }
 
+  disconnectPlayer(socketId) {
+    const roomEntry = this._findRoomBySocketId(socketId);
+    if (!roomEntry) return null;
+
+    const [roomId, room] = roomEntry;
+    const side = this.getSideForSocket(room, socketId);
+    if (!side) return null;
+
+    if (room.status !== 'playing') {
+      return this.leaveRoom(socketId, roomId);
+    }
+
+    room.players[side] = null;
+    room.disconnected[side] = true;
+
+    return {
+      roomId,
+      side,
+      room,
+      remainingSocketId: this.getConnectedOpponentSocketId(room, side),
+      reconnectable: true,
+    };
+  }
+
+  rejoinRoom(socketId, roomId, side) {
+    const normalizedRoomId = this._normalizeRoomId(roomId);
+    const normalizedSide = this._normalizeSide(side);
+    const room = this.rooms.get(normalizedRoomId);
+
+    if (!room) {
+      throw new Error('Room not found');
+    }
+
+    if (room.status !== 'playing') {
+      throw new Error('Game is not active');
+    }
+
+    if (!normalizedSide) {
+      throw new Error('Invalid side');
+    }
+
+    if (room.players[normalizedSide] && room.players[normalizedSide] !== socketId) {
+      throw new Error('Side is already connected');
+    }
+
+    if (!room.disconnected[normalizedSide] && room.players[normalizedSide] !== socketId) {
+      throw new Error('Side is not reconnectable');
+    }
+
+    room.players[normalizedSide] = socketId;
+    room.disconnected[normalizedSide] = false;
+
+    return {
+      room,
+      side: normalizedSide,
+    };
+  }
+
+  closeRoom(roomId) {
+    const roomEntry = this._getRoomEntryById(roomId);
+    if (!roomEntry) return null;
+
+    const [resolvedRoomId, room] = roomEntry;
+    const connectedSocketIds = [room.players.white, room.players.black].filter(Boolean);
+    room.status = 'ended';
+    this.rooms.delete(resolvedRoomId);
+
+    return {
+      roomId: resolvedRoomId,
+      room,
+      connectedSocketIds,
+    };
+  }
+
   getPublicRoom(room) {
     if (!room) return null;
 
@@ -119,6 +200,10 @@ export class RoomManager {
       players: {
         white: Boolean(room.players.white),
         black: Boolean(room.players.black),
+      },
+      disconnected: {
+        white: Boolean(room.disconnected.white),
+        black: Boolean(room.disconnected.black),
       },
       status: room.status,
     };
@@ -143,6 +228,12 @@ export class RoomManager {
     return side === 'white' ? room.players.black : room.players.white;
   }
 
+  getConnectedOpponentSocketId(room, side) {
+    if (!room || (side !== 'white' && side !== 'black')) return null;
+
+    return side === 'white' ? room.players.black : room.players.white;
+  }
+
   _createRoomId() {
     let roomId = '';
 
@@ -162,6 +253,10 @@ export class RoomManager {
     return String(roomId || '')
       .trim()
       .toUpperCase();
+  }
+
+  _normalizeSide(side) {
+    return side === 'white' || side === 'black' ? side : null;
   }
 
   _findRoomBySocketId(socketId) {

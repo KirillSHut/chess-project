@@ -28,6 +28,10 @@ export function joinRoom(roomId) {
   getSocket().emit('join_room', { roomId });
 }
 
+export function rejoinRoom({ roomId, side }) {
+  getSocket().emit('rejoin_room', { roomId, side });
+}
+
 export function leaveRoom(roomId = null) {
   getSocket().emit('leave_room', { roomId });
 }
@@ -68,6 +72,10 @@ export function subscribeToRoomEvents(handlers) {
     activeSocket.on('game_started', handlers.onGameStarted);
   }
 
+  if (handlers.onRoomRejoined) {
+    activeSocket.on('room_rejoined', handlers.onRoomRejoined);
+  }
+
   if (handlers.onMoveApplied) {
     activeSocket.on('move_applied', handlers.onMoveApplied);
   }
@@ -82,6 +90,14 @@ export function subscribeToRoomEvents(handlers) {
 
   if (handlers.onOpponentDisconnected) {
     activeSocket.on('opponent_disconnected', handlers.onOpponentDisconnected);
+  }
+
+  if (handlers.onOpponentReconnected) {
+    activeSocket.on('opponent_reconnected', handlers.onOpponentReconnected);
+  }
+
+  if (handlers.onRoomClosed) {
+    activeSocket.on('room_closed', handlers.onRoomClosed);
   }
 
   return () => {
@@ -109,6 +125,10 @@ export function subscribeToRoomEvents(handlers) {
       activeSocket.off('game_started', handlers.onGameStarted);
     }
 
+    if (handlers.onRoomRejoined) {
+      activeSocket.off('room_rejoined', handlers.onRoomRejoined);
+    }
+
     if (handlers.onMoveApplied) {
       activeSocket.off('move_applied', handlers.onMoveApplied);
     }
@@ -123,6 +143,14 @@ export function subscribeToRoomEvents(handlers) {
 
     if (handlers.onOpponentDisconnected) {
       activeSocket.off('opponent_disconnected', handlers.onOpponentDisconnected);
+    }
+
+    if (handlers.onOpponentReconnected) {
+      activeSocket.off('opponent_reconnected', handlers.onOpponentReconnected);
+    }
+
+    if (handlers.onRoomClosed) {
+      activeSocket.off('room_closed', handlers.onRoomClosed);
     }
   };
 }
